@@ -40,21 +40,33 @@ export function drawRoad(ctx) {
     ctx.fillRect(blc, y, 1, 6);
   }
 
-  // --- Car road (center) ---
+  // --- Car road (center, two lanes) ---
   ctx.fillStyle = COLORS.carRoad;
   ctx.fillRect(CAR_LEFT, 0, CAR_W, GAME_H);
+
+  // Road edge lines (solid white)
   ctx.fillStyle = COLORS.carRoadEdge;
   ctx.fillRect(CAR_LEFT, 0, 1, GAME_H);
   ctx.fillRect(CAR_RIGHT - 1, 0, 1, GAME_H);
-  // Yellow center dashes
-  ctx.fillStyle = COLORS.carRoadLine;
+
+  // Yellow center divider (double line — separates directions)
   const cc = CAR_LEFT + Math.floor(CAR_W / 2);
-  for (let y = -16 + markingOffset; y < GAME_H; y += 20) {
-    ctx.fillRect(cc, y, 1, 8);
+  ctx.fillStyle = COLORS.carRoadLine;
+  ctx.fillRect(cc - 1, 0, 1, GAME_H);
+  ctx.fillRect(cc + 1, 0, 1, GAME_H);
+
+  // Lane dashes within each lane (white dashed)
+  ctx.fillStyle = COLORS.carLaneDash;
+  const leftLaneCenter = CAR_LEFT + Math.floor(CAR_W / 4);
+  const rightLaneCenter = cc + Math.floor(CAR_W / 4);
+  for (let y = -20 + markingOffset; y < GAME_H; y += 20) {
+    ctx.fillRect(leftLaneCenter, y, 1, 8);
+    ctx.fillRect(rightLaneCenter, y, 1, 8);
   }
+
   // Road texture
   ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 16; i++) {
     ctx.fillRect(CAR_LEFT + Math.floor(Math.random() * CAR_W), Math.floor(Math.random() * GAME_H), 1, 1);
   }
 

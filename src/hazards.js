@@ -1,58 +1,83 @@
 import {
-  CAR_LEFT, CAR_RIGHT, CAR_W,
+  CAR_LEFT, CAR_RIGHT, CAR_W, CAR_CENTER, CAR_LANE_W,
+  CAR_LANE_DOWN_CENTER, CAR_LANE_UP_CENTER,
   CAR_SPEED_MIN_KMH, CAR_SPEED_MAX_KMH,
-  SIDE_L_LEFT, SIDE_L_RIGHT, SIDE_R_LEFT, SIDE_R_RIGHT, SIDEWALK_W,
+  ONCOMING_SPEED_MIN_KMH, ONCOMING_SPEED_MAX_KMH,
+  SIDE_L_LEFT, SIDE_R_LEFT, SIDEWALK_W,
   POTHOLE_SIZE, SPEED_TO_KMH,
   GAME_H, COLORS,
 } from './constants.js';
 
 // ---- CARS ----
-// Cars drive the same direction (downhill) but faster than the bike.
-// They come from behind (bottom of screen) and overtake upward.
 
 const CAR_COLORS = ['#3366cc', '#cc3333', '#33aa33', '#888888', '#ffcc00', '#222222', '#cc6600'];
 
+// Same-direction car (left lane) — overtakes from behind
 export function createCar(playerSpeed) {
   const playerKmh = playerSpeed * SPEED_TO_KMH;
-  // Car speed is always faster than the player
   const carKmh = Math.max(playerKmh + 20, CAR_SPEED_MIN_KMH + Math.random() * (CAR_SPEED_MAX_KMH - CAR_SPEED_MIN_KMH));
   const carScrollSpeed = carKmh / SPEED_TO_KMH;
-
-  // Relative speed vs player (how fast it approaches from behind)
   const relativeSpeed = carScrollSpeed - playerSpeed;
 
-  // Random position in car lane
-  const x = CAR_LEFT + 6 + Math.random() * (CAR_W - 12);
+  // Spawn in the left (same-direction) lane
+  const x = CAR_LANE_DOWN_CENTER + (Math.random() - 0.5) * (CAR_LANE_W - 14);
 
   return {
     x,
-    y: GAME_H + 20,      // spawn below screen (behind the player)
+    y: GAME_H + 20,
     relativeSpeed,
+    oncoming: false,
     color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
-    width: 8 + Math.floor(Math.random() * 4),  // car width varies
-    length: 12 + Math.floor(Math.random() * 6), // car length varies
+    width: 8 + Math.floor(Math.random() * 4),
+    length: 12 + Math.floor(Math.random() * 6),
     frame: 0,
     active: true,
-    honked: false,        // will honk if cyclist is in their way
+    honked: false,
+  };
+}
+
+// Oncoming car (right lane) — heading toward you
+export function createOncomingCar(playerSpeed) {
+  const carKmh = ONCOMING_SPEED_MIN_KMH + Math.random() * (ONCOMING_SPEED_MAX_KMH - ONCOMING_SPEED_MIN_KMH);
+  const carScrollSpeed = carKmh / SPEED_TO_KMH;
+  // Closing speed = player speed + oncoming speed (they add up!)
+  const relativeSpeed = playerSpeed + carScrollSpeed;
+
+  // Spawn in the right (oncoming) lane
+  const x = CAR_LANE_UP_CENTER + (Math.random() - 0.5) * (CAR_LANE_W - 14);
+
+  return {
+    x,
+    y: -20,
+    relativeSpeed,
+    oncoming: true,
+    color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+    width: 8 + Math.floor(Math.random() * 4),
+    length: 12 + Math.floor(Math.random() * 6),
+    frame: 0,
+    active: true,
+    honked: false,
   };
 }
 
 export function updateCar(car, player) {
   car.frame++;
 
-  // Cars move upward relative to player (they're overtaking)
-  car.y -= car.relativeSpeed;
+  if (car.oncoming) {
+    // Oncoming: moves downward (toward player)
+    car.y += car.relativeSpeed;
+    if (car.y > GAME_H + 30) car.active = false;
+  } else {
+    // Same direction: moves upward (overtaking)
+    car.y -= car.relativeSpeed;
+    if (car.y < -30) car.active = false;
 
-  // Off screen top? Deactivate
-  if (car.y < -30) {
-    car.active = false;
-  }
-
-  // Honk if player is in the car road and car is close behind
-  if (!car.honked && player.x >= CAR_LEFT && player.x <= CAR_RIGHT) {
-    const dy = car.y - player.y;
-    if (dy > 0 && dy < 50) {
-      car.honked = true;
+    // Honk if player is in the car road and car is close behind
+    if (!car.honked && player.x >= CAR_LEFT && player.x <= CAR_CENTER) {
+      const dy = car.y - player.y;
+      if (dy > 0 && dy < 50) {
+        car.honked = true;
+      }
     }
   }
 }
@@ -79,26 +104,41 @@ export function drawCar(ctx, car) {
   ctx.fillStyle = car.color;
   ctx.fillRect(x - hw, y - hl, car.width, car.length);
 
-  // Roof (darker center)
+  // Roof
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
   ctx.fillRect(x - hw + 2, y - hl + 3, car.width - 4, car.length - 6);
 
-  // Windshield (lighter)
-  ctx.fillStyle = 'rgba(150,200,255,0.5)';
-  ctx.fillRect(x - hw + 2, y + hl - 3, car.width - 4, 2);
+  if (car.oncoming) {
+    // Oncoming: headlights face you (top = front)
+    ctx.fillStyle = '#ffffcc';
+    ctx.fillRect(x - hw, y - hl, 2, 2);
+    ctx.fillRect(x + hw - 2, y - hl, 2, 2);
+    // Headlight glow
+    ctx.fillStyle = 'rgba(255,255,200,0.3)';
+    ctx.fillRect(x - hw - 1, y - hl - 2, car.width + 2, 3);
+    // Tail lights (bottom = rear)
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(x - hw, y + hl - 2, 1, 2);
+    ctx.fillRect(x + hw - 1, y + hl - 2, 1, 2);
+    // Windshield
+    ctx.fillStyle = 'rgba(150,200,255,0.5)';
+    ctx.fillRect(x - hw + 2, y - hl + 2, car.width - 4, 2);
+  } else {
+    // Same direction: rear faces you (top = rear)
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(x - hw, y - hl, 1, 2);
+    ctx.fillRect(x + hw - 1, y - hl, 1, 2);
+    // Headlights (bottom = front, facing away)
+    ctx.fillStyle = '#ffffaa';
+    ctx.fillRect(x - hw, y + hl - 2, 1, 2);
+    ctx.fillRect(x + hw - 1, y + hl - 2, 1, 2);
+    // Windshield
+    ctx.fillStyle = 'rgba(150,200,255,0.5)';
+    ctx.fillRect(x - hw + 2, y + hl - 3, car.width - 4, 2);
+  }
 
-  // Rear lights (top = rear since car moves up)
-  ctx.fillStyle = '#ff3333';
-  ctx.fillRect(x - hw, y - hl, 1, 2);
-  ctx.fillRect(x + hw - 1, y - hl, 1, 2);
-
-  // Headlights (bottom = front)
-  ctx.fillStyle = '#ffffaa';
-  ctx.fillRect(x - hw, y + hl - 2, 1, 2);
-  ctx.fillRect(x + hw - 1, y + hl - 2, 1, 2);
-
-  // Honk indicator
-  if (car.honked && car.frame % 8 < 4) {
+  // Honk indicator (same-direction only)
+  if (!car.oncoming && car.honked && car.frame % 8 < 4) {
     ctx.fillStyle = '#fff';
     ctx.font = '5px monospace';
     ctx.textAlign = 'center';
@@ -108,10 +148,8 @@ export function drawCar(ctx, car) {
 }
 
 // ---- POTHOLES ----
-// Hazards on the sidewalk — hit one and you crash
 
 export function createPothole() {
-  // Random position on either sidewalk
   const onLeft = Math.random() > 0.5;
   const sideLeft = onLeft ? SIDE_L_LEFT : SIDE_R_LEFT;
   const x = sideLeft + 3 + Math.random() * (SIDEWALK_W - 6);
@@ -142,7 +180,6 @@ export function drawPothole(ctx, pothole) {
   const y = Math.round(pothole.y);
   const s = pothole.size;
 
-  // Rim
   ctx.fillStyle = COLORS.potholeRim;
   for (let dy = -s - 1; dy <= s + 1; dy++) {
     for (let dx = -s - 1; dx <= s + 1; dx++) {
@@ -152,7 +189,6 @@ export function drawPothole(ctx, pothole) {
     }
   }
 
-  // Hole
   ctx.fillStyle = COLORS.pothole;
   for (let dy = -s; dy <= s; dy++) {
     for (let dx = -s; dx <= s; dx++) {
@@ -162,7 +198,6 @@ export function drawPothole(ctx, pothole) {
     }
   }
 
-  // Crack lines
   ctx.fillStyle = '#2a2015';
   ctx.fillRect(x - s, y, s * 2 + 1, 1);
   ctx.fillRect(x, y - s, 1, s * 2 + 1);

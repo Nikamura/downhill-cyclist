@@ -2,7 +2,7 @@ import { GAME_W, GAME_H, SCALE, PED_SPAWN_INTERVAL_MIN, PED_SPAWN_INTERVAL_MAX, 
 import { initInput, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createPedestrian, updatePedestrian, checkBellEffect, checkCollision } from './pedestrian.js';
-import { createCar, updateCar, checkCarCollision, drawCar } from './hazards.js';
+import { createCar, createOncomingCar, updateCar, checkCarCollision, drawCar } from './hazards.js';
 import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from './hazards.js';
 import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
@@ -120,10 +120,15 @@ function updatePlaying() {
     }
   }
 
-  // Spawn cars
+  // Spawn cars — both lanes
   carSpawnTimer--;
   if (carSpawnTimer <= 0) {
-    cars.push(createCar(player.speed));
+    // Randomly pick same-direction or oncoming
+    if (Math.random() < 0.5) {
+      cars.push(createCar(player.speed));
+    } else {
+      cars.push(createOncomingCar(player.speed));
+    }
     const interval = CAR_SPAWN_INTERVAL_MIN +
       Math.random() * (CAR_SPAWN_INTERVAL_MAX - CAR_SPAWN_INTERVAL_MIN);
     carSpawnTimer = Math.floor(interval);
@@ -143,7 +148,7 @@ function updatePlaying() {
   for (const car of cars) {
     updateCar(car, player);
     if (car.active && checkCarCollision(car, player)) {
-      crash('Hit by a car!');
+      crash(car.oncoming ? 'Head-on collision!' : 'Hit by a car!');
       return;
     }
   }
