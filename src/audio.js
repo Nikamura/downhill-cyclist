@@ -10,6 +10,7 @@ let initialized = false;
 
 const MUSIC_VOLUME = 0.35;
 const SFX_VOLUME = 0.6;
+let muted = false;
 const MUSIC_PATH = './Razor1911 - Soldier Of Fortune intro.xm';
 
 // --- Init ---
@@ -65,6 +66,22 @@ async function loadMusic() {
   } catch (e) {
     console.warn('Could not load .xm file:', e);
   }
+}
+
+// --- Mute ---
+
+export function toggleMute() {
+  muted = !muted;
+  if (!masterGain) return muted;
+  masterGain.gain.value = muted ? 0 : 1;
+  if (chiptunePlayer) {
+    chiptunePlayer.setVol(muted ? 0 : MUSIC_VOLUME);
+  }
+  return muted;
+}
+
+export function isMuted() {
+  return muted;
 }
 
 // --- Music control ---

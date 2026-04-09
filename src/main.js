@@ -8,7 +8,7 @@ import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from '.
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
 import { initTouch, setTouchGameState } from './touch.js';
-import { initAudio, startMusic, stopMusic, playBell, playHonk, playCrash } from './audio.js';
+import { initAudio, startMusic, stopMusic, playBell, playHonk, playCrash, toggleMute } from './audio.js';
 
 // --- Setup canvas (fill entire screen, no bars) ---
 const canvas = document.getElementById('game');
@@ -34,6 +34,19 @@ let crashReason = '';
 initInput();
 initTouch();
 initScenery();
+
+// Mute button
+const muteBtn = document.getElementById('mute-btn');
+if (muteBtn) {
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = toggleMute();
+    muteBtn.textContent = m ? '✕' : '♪';
+    muteBtn.style.opacity = m ? '0.4' : '1';
+  });
+  // Prevent mute button taps from triggering game touch controls
+  muteBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+}
 
 function startGame() {
   initAudio();

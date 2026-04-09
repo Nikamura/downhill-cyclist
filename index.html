@@ -6,6 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#000">
   <title>Downhill Cyclist</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -25,10 +28,32 @@
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+    #mute-btn {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: 18px;
+      line-height: 36px;
+      text-align: center;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      padding: 0;
+    }
+    #mute-btn:active { background: rgba(0,0,0,0.7); }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
+  <button id="mute-btn" aria-label="Toggle mute">♪</button>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
