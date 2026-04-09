@@ -8,6 +8,7 @@ import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from '.
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
 import { initTouch } from './touch.js';
+import { initAudio, startMusic, stopMusic, playBell, playHonk, playCrash } from './audio.js';
 
 // --- Setup canvas (fill screen, maintain aspect ratio) ---
 const canvas = document.getElementById('game');
@@ -56,6 +57,7 @@ initTouch();
 initScenery();
 
 function startGame() {
+  initAudio();
   state = 'playing';
   player = createPlayer();
   pedestrians = [];
@@ -64,6 +66,7 @@ function startGame() {
   pedSpawnTimer = 60;
   carSpawnTimer = 80;
   crashReason = '';
+  startMusic();
 }
 
 // --- Main loop ---
@@ -97,11 +100,15 @@ function crash(reason) {
   player.alive = false;
   crashReason = reason;
   state = 'gameover';
+  playCrash();
+  stopMusic();
 }
 
 function updatePlaying() {
   // --- Update ---
+  const wasBellActive = player.bellActive;
   updatePlayer(player);
+  if (!wasBellActive && player.bellActive) playBell();
   updateRoad(player.speed);
   updateScenery(player.speed);
 
@@ -146,7 +153,9 @@ function updatePlaying() {
 
   // Update cars
   for (const car of cars) {
+    const wasHonked = car.honked;
     updateCar(car, player);
+    if (!wasHonked && car.honked) playHonk();
     if (car.active && checkCarCollision(car, player)) {
       crash(car.oncoming ? 'Head-on collision!' : 'Hit by a car!');
       return;
