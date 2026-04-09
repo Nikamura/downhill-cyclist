@@ -152,8 +152,6 @@ export function drawHUD(ctx, player) {
     ctx.fillText('SIDEWALK', 2, 40);
   }
 
-  // Speedometer
-  drawSpeedometer(ctx, player);
 }
 
 export function drawTitleScreen(ctx, frame) {
