@@ -65,15 +65,15 @@ function updatePlaying() {
   updateRoad(player.speed);
   updateScenery(player.speed);
 
-  // Spawn pedestrians
+  // Spawn pedestrians — more frequently at higher speeds
   spawnTimer--;
   if (spawnTimer <= 0) {
     pedestrians.push(createPedestrian(player.speed));
-    // Spawn rate increases with speed
-    const interval = PED_SPAWN_INTERVAL_MIN +
-      Math.random() * (PED_SPAWN_INTERVAL_MAX - PED_SPAWN_INTERVAL_MIN) *
-      (1 - (player.speed - 1.2) / 2.3 * 0.5);
-    spawnTimer = Math.max(PED_SPAWN_INTERVAL_MIN, Math.floor(interval));
+    // Scale spawn rate: at 30 km/h ~90 frames, at 150+ km/h ~20 frames
+    const speedFactor = Math.min(1, (player.kmh - 30) / 150);
+    const interval = PED_SPAWN_INTERVAL_MAX -
+      speedFactor * (PED_SPAWN_INTERVAL_MAX - PED_SPAWN_INTERVAL_MIN);
+    spawnTimer = Math.floor(interval + Math.random() * 20);
   }
 
   // Update pedestrians
@@ -90,7 +90,15 @@ function updatePlaying() {
   // Remove inactive
   pedestrians = pedestrians.filter((p) => p.active);
 
-  // Draw
+  // Draw — apply screen shake at high speed
+  if (player.screenShake > 0.5) {
+    const s = player.screenShake;
+    ctx.setTransform(SCALE, 0, 0, SCALE,
+      (Math.random() - 0.5) * s * SCALE,
+      (Math.random() - 0.5) * s * SCALE,
+    );
+  }
+
   drawRoad(ctx);
   drawScenery(ctx);
 
@@ -104,6 +112,8 @@ function updatePlaying() {
     drawBellRing(ctx, player.x, player.y, player.bellProgress);
   }
 
+  // Reset transform for HUD (no shake on UI)
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   drawHUD(ctx, player);
 }
 
