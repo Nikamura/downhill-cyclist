@@ -90,6 +90,21 @@ export function drawRoad(ctx) {
     ctx.fillRect(SIDE_R_LEFT, y, SIDEWALK_W, 1);
   }
 
+  // --- Grass slope texture (diagonal lines showing slope towards road) ---
+  ctx.fillStyle = 'rgba(70,100,45,0.4)';
+  // Left grass — slopes right (towards road)
+  for (let y = -32 + markingOffset * 2; y < GAME_H; y += 12) {
+    for (let x = 0; x < SIDE_L_LEFT - 1; x += 3) {
+      ctx.fillRect(x, y + (SIDE_L_LEFT - x) * 0.3, 2, 1);
+    }
+  }
+  // Right grass — slopes left (towards road)
+  for (let y = -32 + markingOffset * 2; y < GAME_H; y += 12) {
+    for (let x = SIDE_R_RIGHT + 1; x < GAME_W; x += 3) {
+      ctx.fillRect(x, y + (x - SIDE_R_RIGHT) * 0.3, 2, 1);
+    }
+  }
+
   // --- Curbs (grass edges) ---
   ctx.fillStyle = COLORS.curb;
   ctx.fillRect(SIDE_L_LEFT - 1, 0, 1, GAME_H);
@@ -97,7 +112,7 @@ export function drawRoad(ctx) {
 }
 
 // --- Scenery: trees on grass ---
-const trees = [];
+export const trees = [];
 
 export function initScenery() {
   for (let i = 0; i < 14; i++) {

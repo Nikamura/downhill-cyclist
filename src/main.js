@@ -4,7 +4,7 @@ import { createPlayer, updatePlayer } from './player.js';
 import { createPedestrian, updatePedestrian, checkBellEffect, checkCollision } from './pedestrian.js';
 import { createCar, createOncomingCar, updateCar, checkCarCollision, drawCar } from './hazards.js';
 import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from './hazards.js';
-import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
+import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery, trees } from './road.js';
 import { drawBicycle, drawPedestrian, drawBellRing, drawSplat } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
 import { initTouch, setTouchGameState } from './touch.js';
@@ -170,6 +170,16 @@ function updatePlaying() {
     updatePothole(pot, player.speed);
     if (pot.active && checkPotholeCollision(pot, player)) {
       crash('Hit a pothole!');
+      return;
+    }
+  }
+
+  // Tree collisions (on grass)
+  for (const tree of trees) {
+    const dx = Math.abs(player.x - (tree.x + 1));
+    const dy = Math.abs(player.y - tree.y);
+    if (dx < 4 && dy < tree.size + 3) {
+      crash('Hit a tree!');
       return;
     }
   }
