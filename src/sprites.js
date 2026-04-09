@@ -45,12 +45,10 @@ export function drawBicycle(ctx, x, y, frame, braking) {
   }
 }
 
-export function drawPedestrian(ctx, x, y, hasANC, scared, frame) {
-  const bob = Math.floor(frame / 8) % 2;
-
+function drawSinglePed(ctx, x, y, bob, shirtColor, hasANC, scared, frame) {
   // Body
-  ctx.fillStyle = hasANC ? COLORS.pedANC : COLORS.ped;
-  ctx.fillRect(x - 2, y + bob, 5, 6);        // torso
+  ctx.fillStyle = shirtColor;
+  ctx.fillRect(x - 2, y + bob, 5, 6);
 
   // Head
   ctx.fillStyle = '#e8d5b7';
@@ -63,16 +61,15 @@ export function drawPedestrian(ctx, x, y, hasANC, scared, frame) {
 
   if (scared) {
     ctx.fillStyle = '#333';
-    ctx.fillRect(x - 1, y - 1 + bob, 1, 1);  // wide eyes, dot pupils
+    ctx.fillRect(x - 1, y - 1 + bob, 1, 1);
     ctx.fillRect(x + 1, y - 1 + bob, 1, 1);
   }
 
-  // ANC headphones
+  // AirPods (tiny white earbuds)
   if (hasANC) {
-    ctx.fillStyle = COLORS.headphones;
-    ctx.fillRect(x - 2, y - 2 + bob, 1, 3);  // left ear
-    ctx.fillRect(x + 2, y - 2 + bob, 1, 3);  // right ear
-    ctx.fillRect(x - 2, y - 3 + bob, 5, 1);  // headband
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - 2, y - 1 + bob, 1, 2);  // left airpod
+    ctx.fillRect(x + 2, y - 1 + bob, 1, 2);  // right airpod
   }
 
   // Legs
@@ -80,6 +77,56 @@ export function drawPedestrian(ctx, x, y, hasANC, scared, frame) {
   const legAnim = Math.floor(frame / 10) % 2;
   ctx.fillRect(x - 1, y + 6 + bob, 1, 3 + legAnim);
   ctx.fillRect(x + 1, y + 6 + bob, 1, 3 - legAnim);
+}
+
+function drawDog(ctx, x, y, bob, frame, color) {
+  const legAnim = Math.floor(frame / 6) % 2;
+
+  // Body
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y + 4 + bob, 3, 2);
+
+  // Head
+  ctx.fillRect(x + 3, y + 3 + bob, 2, 2);
+
+  // Ear
+  ctx.fillStyle = '#555';
+  ctx.fillRect(x + 3, y + 2 + bob, 1, 1);
+
+  // Legs
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y + 6 + bob, 1, 1 + legAnim);
+  ctx.fillRect(x + 2, y + 6 + bob, 1, 1 - legAnim);
+
+  // Tail (wagging)
+  const wag = Math.floor(frame / 4) % 2;
+  ctx.fillRect(x - 1 + wag, y + 3 + bob, 1, 1);
+}
+
+export function drawPedestrian(ctx, ped) {
+  const { x, y, hasANC, scared, frame, type } = ped;
+  const bob = Math.floor(frame / 8) % 2;
+  const shirt = hasANC ? COLORS.pedANC : COLORS.ped;
+
+  if (type === 'couple') {
+    drawSinglePed(ctx, x - 3, y, bob, shirt, hasANC, scared, frame);
+    const bob2 = Math.floor((frame + 4) / 8) % 2;
+    drawSinglePed(ctx, x + 3, y, bob2, ped.partnerShirt, false, scared, frame + 5);
+    return;
+  }
+
+  if (type === 'dogWalker') {
+    drawSinglePed(ctx, x - 3, y, bob, shirt, hasANC, scared, frame);
+    // Leash
+    ctx.fillStyle = '#666';
+    ctx.fillRect(x - 1, y + 3 + bob, 5, 1);
+    // Dog
+    const dogBob = Math.floor((frame + 3) / 8) % 2;
+    drawDog(ctx, x + 4, y, dogBob, frame, ped.dogColor);
+    return;
+  }
+
+  drawSinglePed(ctx, x, y, bob, shirt, hasANC, scared, frame);
 }
 
 export function drawSplat(ctx, x, y) {

@@ -176,7 +176,7 @@ export function drawTitleScreen(ctx, frame) {
   ctx.fillText('LEFT: sidewalk (potholes!)', GAME_W / 2, 158);
   ctx.fillText('CENTER: bike path (people)', GAME_W / 2, 168);
   ctx.fillText('RIGHT: car road (cars!)', GAME_W / 2, 178);
-  ctx.fillText('some people wear ANC', GAME_W / 2, 188);
+  ctx.fillText('some have AirPods, dogs, gfs', GAME_W / 2, 188);
 
   if (Math.floor(frame / 30) % 2 === 0) {
     ctx.fillStyle = COLORS.bell;

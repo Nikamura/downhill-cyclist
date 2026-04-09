@@ -152,7 +152,7 @@ function updatePlaying() {
       if (!ped.active) continue;
       const dx = Math.abs(car.x - ped.x);
       const dy = Math.abs(car.y - ped.y);
-      if (dx < car.width / 2 + 3 && dy < car.length / 2 + 4) {
+      if (dx < car.width / 2 + (ped.collisionW || 3) - 2 && dy < car.length / 2 + 4) {
         splats.push({ x: ped.x, y: ped.y });
         ped.active = false;
       }
@@ -204,7 +204,7 @@ function updatePlaying() {
 
   // Draw pedestrians
   for (const ped of pedestrians) {
-    drawPedestrian(ctx, ped.x, ped.y, ped.hasANC, ped.scared, ped.frame);
+    drawPedestrian(ctx, ped);
   }
 
   // Draw player
@@ -230,7 +230,7 @@ function updateGameOver() {
   for (const s of splats) drawSplat(ctx, s.x, s.y);
   for (const pot of potholes) drawPothole(ctx, pot);
   for (const ped of pedestrians) {
-    drawPedestrian(ctx, ped.x, ped.y, ped.hasANC, ped.scared, ped.frame);
+    drawPedestrian(ctx, ped);
   }
   drawBicycle(ctx, player.x, player.y, player.frame, player.braking);
   for (const car of cars) drawCar(ctx, car);
