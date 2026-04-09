@@ -82,6 +82,27 @@ export function drawPedestrian(ctx, x, y, hasANC, scared, frame) {
   ctx.fillRect(x + 1, y + 6 + bob, 1, 3 - legAnim);
 }
 
+export function drawSplat(ctx, x, y) {
+  x = Math.round(x);
+  y = Math.round(y);
+  // Dark red splatter pattern
+  ctx.fillStyle = '#8b0000';
+  ctx.fillRect(x - 3, y - 1, 7, 3);
+  ctx.fillRect(x - 1, y - 3, 3, 7);
+  ctx.fillRect(x - 2, y - 2, 5, 5);
+  // Darker center
+  ctx.fillStyle = '#5a0000';
+  ctx.fillRect(x - 1, y - 1, 3, 3);
+  // Spatter dots
+  ctx.fillStyle = '#8b0000';
+  ctx.fillRect(x - 4, y - 3, 1, 1);
+  ctx.fillRect(x + 4, y + 2, 1, 1);
+  ctx.fillRect(x + 3, y - 2, 1, 1);
+  ctx.fillRect(x - 3, y + 3, 1, 1);
+  ctx.fillRect(x + 1, y + 4, 1, 1);
+  ctx.fillRect(x - 5, y, 1, 1);
+}
+
 export function drawBellRing(ctx, x, y, progress) {
   // Expanding ring effect
   const radius = Math.floor(progress * 30);

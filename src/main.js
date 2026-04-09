@@ -5,7 +5,7 @@ import { createPedestrian, updatePedestrian, checkBellEffect, checkCollision } f
 import { createCar, createOncomingCar, updateCar, checkCarCollision, drawCar } from './hazards.js';
 import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from './hazards.js';
 import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
-import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
+import { drawBicycle, drawPedestrian, drawBellRing, drawSplat } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
 import { initTouch, setTouchGameState } from './touch.js';
 import { initAudio, startMusic, stopMusic, playBell, playHonk, playCrash } from './audio.js';
@@ -30,6 +30,7 @@ let pedSpawnTimer = 0;
 let carSpawnTimer = 0;
 let frame = 0;
 let crashReason = '';
+let splats = [];
 
 initInput();
 initTouch();
@@ -43,6 +44,7 @@ function startGame() {
   pedestrians = [];
   cars = [];
   potholes = [];
+  splats = [];
   pedSpawnTimer = 60;
   carSpawnTimer = 80;
   crashReason = '';
@@ -143,6 +145,26 @@ function updatePlaying() {
     }
   }
 
+  // Car vs pedestrian collisions — splat!
+  for (const car of cars) {
+    if (!car.active) continue;
+    for (const ped of pedestrians) {
+      if (!ped.active) continue;
+      const dx = Math.abs(car.x - ped.x);
+      const dy = Math.abs(car.y - ped.y);
+      if (dx < car.width / 2 + 3 && dy < car.length / 2 + 4) {
+        splats.push({ x: ped.x, y: ped.y });
+        ped.active = false;
+      }
+    }
+  }
+
+  // Update splats (scroll with road)
+  for (let i = splats.length - 1; i >= 0; i--) {
+    splats[i].y += player.speed;
+    if (splats[i].y > GAME_H + 20) splats.splice(i, 1);
+  }
+
   // Update potholes
   for (const pot of potholes) {
     updatePothole(pot, player.speed);
@@ -169,6 +191,11 @@ function updatePlaying() {
 
   drawRoad(ctx);
   drawScenery(ctx);
+
+  // Draw splats (on road surface)
+  for (const s of splats) {
+    drawSplat(ctx, s.x, s.y);
+  }
 
   // Draw potholes (on the road surface)
   for (const pot of potholes) {
@@ -200,6 +227,7 @@ function updatePlaying() {
 function updateGameOver() {
   drawRoad(ctx);
   drawScenery(ctx);
+  for (const s of splats) drawSplat(ctx, s.x, s.y);
   for (const pot of potholes) drawPothole(ctx, pot);
   for (const ped of pedestrians) {
     drawPedestrian(ctx, ped.x, ped.y, ped.hasANC, ped.scared, ped.frame);
