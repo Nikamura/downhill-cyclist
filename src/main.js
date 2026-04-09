@@ -9,12 +9,36 @@ import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
 import { initTouch } from './touch.js';
 
-// --- Setup canvas ---
+// --- Setup canvas (fill screen, maintain aspect ratio) ---
 const canvas = document.getElementById('game');
 canvas.width = GAME_W * SCALE;
 canvas.height = GAME_H * SCALE;
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
+
+function resizeCanvas() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const gameAspect = GAME_W / GAME_H;
+  const screenAspect = vw / vh;
+
+  let cssW, cssH;
+  if (screenAspect > gameAspect) {
+    // screen is wider than game — fit to height
+    cssH = vh;
+    cssW = vh * gameAspect;
+  } else {
+    // screen is taller than game — fit to width
+    cssW = vw;
+    cssH = vw / gameAspect;
+  }
+
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 // --- Game state ---
 let state = 'title';
