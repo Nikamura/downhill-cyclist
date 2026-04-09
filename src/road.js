@@ -1,59 +1,74 @@
 import {
-  GAME_W, GAME_H, ROAD_LEFT, ROAD_RIGHT, LANE_WIDTH, LANE_COUNT, COLORS,
+  GAME_W, GAME_H,
+  BIKE_LEFT, BIKE_RIGHT, BIKE_PATH_WIDTH,
+  SIDEWALK_L_LEFT, SIDEWALK_L_RIGHT, SIDEWALK_R_LEFT, SIDEWALK_R_RIGHT,
+  SIDEWALK_WIDTH, COLORS,
 } from './constants.js';
 
-// Road markings scroll position
 let markingOffset = 0;
 
 export function updateRoad(scrollSpeed) {
-  markingOffset = (markingOffset + scrollSpeed) % 20;
+  markingOffset = (markingOffset + scrollSpeed) % 16;
 }
 
 export function drawRoad(ctx) {
-  // Grass
+  // Grass background
   ctx.fillStyle = COLORS.grass;
   ctx.fillRect(0, 0, GAME_W, GAME_H);
 
-  // Sidewalk
+  // Left sidewalk
   ctx.fillStyle = COLORS.sidewalk;
-  ctx.fillRect(ROAD_LEFT - 8, 0, 8, GAME_H);
-  ctx.fillRect(ROAD_RIGHT, 0, 8, GAME_H);
+  ctx.fillRect(SIDEWALK_L_LEFT, 0, SIDEWALK_WIDTH, GAME_H);
 
-  // Road surface
-  ctx.fillStyle = COLORS.road;
-  ctx.fillRect(ROAD_LEFT, 0, ROAD_RIGHT - ROAD_LEFT, GAME_H);
+  // Right sidewalk
+  ctx.fillRect(SIDEWALK_R_LEFT, 0, SIDEWALK_WIDTH, GAME_H);
 
-  // Road edges
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(ROAD_LEFT, 0, 1, GAME_H);
-  ctx.fillRect(ROAD_RIGHT - 1, 0, 1, GAME_H);
-
-  // Lane markings (dashed)
-  ctx.fillStyle = COLORS.roadLine;
-  for (let lane = 1; lane < LANE_COUNT; lane++) {
-    const lx = ROAD_LEFT + lane * LANE_WIDTH;
-    for (let y = -20 + markingOffset; y < GAME_H; y += 20) {
-      ctx.fillRect(lx, y, 1, 8);
-    }
+  // Sidewalk tile pattern (horizontal lines scrolling)
+  ctx.fillStyle = COLORS.sidewalkLine;
+  for (let y = -16 + markingOffset; y < GAME_H; y += 16) {
+    ctx.fillRect(SIDEWALK_L_LEFT, y, SIDEWALK_WIDTH, 1);
+    ctx.fillRect(SIDEWALK_R_LEFT, y, SIDEWALK_WIDTH, 1);
   }
 
-  // Occasional road texture/grain
-  ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  for (let i = 0; i < 20; i++) {
-    const rx = ROAD_LEFT + Math.floor(Math.random() * (ROAD_RIGHT - ROAD_LEFT));
+  // Bike path surface
+  ctx.fillStyle = COLORS.bikePath;
+  ctx.fillRect(BIKE_LEFT, 0, BIKE_PATH_WIDTH, GAME_H);
+
+  // Bike path edges
+  ctx.fillStyle = COLORS.bikePathEdge;
+  ctx.fillRect(BIKE_LEFT, 0, 1, GAME_H);
+  ctx.fillRect(BIKE_RIGHT - 1, 0, 1, GAME_H);
+
+  // Center dashed line
+  ctx.fillStyle = '#aaa';
+  const cx = BIKE_LEFT + Math.floor(BIKE_PATH_WIDTH / 2);
+  for (let y = -16 + markingOffset; y < GAME_H; y += 16) {
+    ctx.fillRect(cx, y, 1, 6);
+  }
+
+  // Bike path texture
+  ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  for (let i = 0; i < 10; i++) {
+    const rx = BIKE_LEFT + Math.floor(Math.random() * BIKE_PATH_WIDTH);
     const ry = Math.floor(Math.random() * GAME_H);
     ctx.fillRect(rx, ry, 1, 1);
   }
+
+  // Curb between sidewalk and grass
+  ctx.fillStyle = '#9a8a6a';
+  ctx.fillRect(SIDEWALK_L_LEFT, 0, 1, GAME_H);
+  ctx.fillRect(SIDEWALK_R_RIGHT - 1, 0, 1, GAME_H);
 }
 
-// Draw trees/bushes on the sides for scenery
-let treeOffset = 0;
+// Scenery — trees on the grass areas outside sidewalks
 const trees = [];
 
 export function initScenery() {
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 14; i++) {
     trees.push({
-      x: Math.random() > 0.5 ? Math.random() * (ROAD_LEFT - 12) : ROAD_RIGHT + 10 + Math.random() * (GAME_W - ROAD_RIGHT - 12),
+      x: Math.random() > 0.5
+        ? Math.random() * (SIDEWALK_L_LEFT - 6)
+        : SIDEWALK_R_RIGHT + 2 + Math.random() * (GAME_W - SIDEWALK_R_RIGHT - 6),
       y: Math.random() * GAME_H,
       size: 3 + Math.floor(Math.random() * 4),
     });
@@ -66,18 +81,16 @@ export function updateScenery(scrollSpeed) {
     if (tree.y > GAME_H + 10) {
       tree.y = -10;
       tree.x = Math.random() > 0.5
-        ? Math.random() * (ROAD_LEFT - 12)
-        : ROAD_RIGHT + 10 + Math.random() * (GAME_W - ROAD_RIGHT - 12);
+        ? Math.random() * (SIDEWALK_L_LEFT - 6)
+        : SIDEWALK_R_RIGHT + 2 + Math.random() * (GAME_W - SIDEWALK_R_RIGHT - 6);
     }
   }
 }
 
 export function drawScenery(ctx) {
   for (const tree of trees) {
-    // Trunk
     ctx.fillStyle = '#5a3a1a';
     ctx.fillRect(tree.x, tree.y, 2, tree.size);
-    // Canopy
     ctx.fillStyle = '#3a6a2a';
     const r = tree.size - 1;
     for (let dy = -r; dy <= 0; dy++) {

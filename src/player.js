@@ -1,5 +1,5 @@
 import {
-  GAME_W, ROAD_LEFT, ROAD_RIGHT,
+  BIKE_CENTER, BIKE_LEFT, BIKE_RIGHT,
   PLAYER_SPEED, BASE_SCROLL_SPEED, SPEED_TO_KMH,
   GRAVITY_ACCEL, AIR_DRAG, PEDAL_ACCEL, BRAKE_DECEL, MIN_SPEED,
   BELL_COOLDOWN,
@@ -8,7 +8,7 @@ import { isDown, consumeKey } from './input.js';
 
 export function createPlayer() {
   return {
-    x: GAME_W / 2,
+    x: BIKE_CENTER,
     y: 200,
     speed: BASE_SCROLL_SPEED,
     kmh: BASE_SCROLL_SPEED * SPEED_TO_KMH,
@@ -36,7 +36,7 @@ export function updatePlayer(player) {
   if (isDown('ArrowRight') || isDown('KeyD')) {
     player.x += steerSpeed;
   }
-  player.x = Math.max(ROAD_LEFT + 4, Math.min(ROAD_RIGHT - 4, player.x));
+  player.x = Math.max(BIKE_LEFT + 3, Math.min(BIKE_RIGHT - 3, player.x));
 
   // --- Downhill physics ---
   // 1. Gravity always pulls you faster (it's a hill!)

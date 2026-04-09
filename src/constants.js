@@ -3,48 +3,51 @@ export const GAME_W = 160;
 export const GAME_H = 240;
 export const SCALE = 3;
 
-// Road
-export const ROAD_LEFT = 32;
-export const ROAD_RIGHT = 128;
-export const LANE_COUNT = 3;
-export const LANE_WIDTH = (ROAD_RIGHT - ROAD_LEFT) / LANE_COUNT;
+// Road layout — narrow bike path with wide sidewalks
+export const BIKE_PATH_WIDTH = 16;  // ~2 bicycle widths
+export const BIKE_LEFT = Math.floor((GAME_W - BIKE_PATH_WIDTH) / 2);
+export const BIKE_RIGHT = BIKE_LEFT + BIKE_PATH_WIDTH;
+export const BIKE_CENTER = BIKE_LEFT + BIKE_PATH_WIDTH / 2;
+
+// Sidewalks on both sides (where pedestrians walk)
+export const SIDEWALK_WIDTH = 20;
+export const SIDEWALK_L_LEFT = BIKE_LEFT - SIDEWALK_WIDTH;
+export const SIDEWALK_L_RIGHT = BIKE_LEFT;
+export const SIDEWALK_R_LEFT = BIKE_RIGHT;
+export const SIDEWALK_R_RIGHT = BIKE_RIGHT + SIDEWALK_WIDTH;
 
 // Player — downhill physics
 export const PLAYER_SPEED = 1.5;
-export const BASE_SCROLL_SPEED = 1.2;   // ~30 km/h starting speed
+export const BASE_SCROLL_SPEED = 1.2;
 
-// Physics model:
-//   gravity pull (constant downhill force)
-//   air drag (proportional to speed², limits terminal velocity)
-//   pedaling (hold UP to add force — you maniac)
-//   braking (strong deceleration)
-export const GRAVITY_ACCEL = 0.006;      // constant downhill pull per frame
-export const AIR_DRAG = 0.00004;         // drag coefficient (force = drag * v²)
-export const PEDAL_ACCEL = 0.012;        // additional accel when pedaling
-export const BRAKE_DECEL = 0.06;         // brake force per frame
-export const MIN_SPEED = 0.3;            // can't fully stop on a hill
+export const GRAVITY_ACCEL = 0.006;
+export const AIR_DRAG = 0.00004;
+export const PEDAL_ACCEL = 0.012;
+export const BRAKE_DECEL = 0.06;
+export const MIN_SPEED = 0.3;
 
-// Speed conversion: internal scroll units → km/h
-// 1.0 scroll = ~25 km/h, so max ~250+ km/h for the truly insane
 export const SPEED_TO_KMH = 25;
 
 // Pedestrians
-export const PED_SPAWN_INTERVAL_MIN = 20; // frames (tighter at high speed)
+export const PED_SPAWN_INTERVAL_MIN = 20;
 export const PED_SPAWN_INTERVAL_MAX = 90;
 export const PED_ANC_CHANCE = 0.3;
-export const PED_WANDER_SPEED = 0.3;
+export const PED_WALK_SPEED = 0.4;       // walking along sidewalk
+export const PED_WANDER_CHANCE = 0.003;   // per-frame chance to start drifting into bike lane
+export const PED_WANDER_SPEED = 0.2;      // lateral drift speed
 
 // Bell
 export const BELL_RANGE = 60;
 export const BELL_COOLDOWN = 30;
 
-// Colors (pixel art palette)
+// Colors
 export const COLORS = {
-  road: '#555568',
-  roadLine: '#8888a0',
-  sidewalk: '#77885a',
+  bikePath: '#888898',
+  bikePathLine: '#aaaa99',
+  bikePathEdge: '#fff',
+  sidewalk: '#c4b08a',
+  sidewalkLine: '#b0a07a',
   grass: '#5a7a3a',
-  sky: '#87ceeb',
   player: '#e63946',
   playerWheel: '#222',
   ped: '#f4a261',

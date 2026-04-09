@@ -1,26 +1,48 @@
 import {
-  ROAD_LEFT, ROAD_RIGHT, LANE_WIDTH, LANE_COUNT,
-  PED_ANC_CHANCE, PED_WANDER_SPEED, BELL_RANGE,
+  BIKE_LEFT, BIKE_RIGHT, BIKE_CENTER, BIKE_PATH_WIDTH,
+  SIDEWALK_L_LEFT, SIDEWALK_L_RIGHT, SIDEWALK_R_LEFT, SIDEWALK_R_RIGHT,
+  PED_ANC_CHANCE, PED_WALK_SPEED, PED_WANDER_CHANCE, PED_WANDER_SPEED,
+  BELL_RANGE, GAME_H,
 } from './constants.js';
 
 export function createPedestrian(scrollSpeed) {
-  const fromLeft = Math.random() > 0.5;
   const hasANC = Math.random() < PED_ANC_CHANCE;
+  const onLeft = Math.random() > 0.5;
 
-  // Pedestrians start from sidewalk and wander onto road
-  const startX = fromLeft ? ROAD_LEFT - 8 : ROAD_RIGHT + 8;
-  const targetLane = Math.floor(Math.random() * LANE_COUNT);
-  const targetX = ROAD_LEFT + targetLane * LANE_WIDTH + LANE_WIDTH / 2;
+  const sidewalkCenter = onLeft
+    ? (SIDEWALK_L_LEFT + SIDEWALK_L_RIGHT) / 2
+    : (SIDEWALK_R_LEFT + SIDEWALK_R_RIGHT) / 2;
+
+  const offset = (Math.random() - 0.5) * 10;
+
+  // Spawn ahead of the player (top of screen or even above)
+  // At higher speeds, they appear further ahead so you have time to react
+  const spawnY = -10 - Math.random() * 20;
+
+  // Some pedestrians are already wandering into the bike lane when they spawn
+  const alreadyWandering = Math.random() < 0.35;
+  let startX = sidewalkCenter + offset;
+
+  if (alreadyWandering) {
+    // Already partially or fully in the bike lane
+    const progress = Math.random(); // 0 = sidewalk edge, 1 = middle of bike path
+    if (onLeft) {
+      startX = BIKE_LEFT + progress * (BIKE_PATH_WIDTH / 2);
+    } else {
+      startX = BIKE_RIGHT - progress * (BIKE_PATH_WIDTH / 2);
+    }
+  }
 
   return {
     x: startX,
-    y: -10,                        // spawn above screen
-    targetX,
+    y: spawnY,
+    homeX: sidewalkCenter + offset,
+    onLeft,
     hasANC,
+    wandering: alreadyWandering,
     scared: false,
     scaredTimer: 0,
-    wanderDir: fromLeft ? 1 : -1,
-    speed: PED_WANDER_SPEED + Math.random() * 0.3,
+    walkSpeed: PED_WALK_SPEED + Math.random() * 0.2,
     frame: 0,
     active: true,
   };
@@ -29,31 +51,46 @@ export function createPedestrian(scrollSpeed) {
 export function updatePedestrian(ped, player) {
   ped.frame++;
 
-  // Move down relative to player speed (world scrolls)
-  ped.y += player.speed;
+  // Pedestrians scroll down relative to player speed
+  // They're walking the same direction but slower, so net movement is downward
+  ped.y += player.speed - ped.walkSpeed;
 
-  // If scared (heard bell), move out of the way
   if (ped.scared) {
+    // Heard the bell — hurry back to sidewalk
     ped.scaredTimer--;
-    // Run away from player
-    const dx = ped.x < player.x ? -1.5 : 1.5;
-    ped.x += dx;
-
+    const retreatTarget = ped.homeX;
+    const dx = retreatTarget - ped.x;
+    if (Math.abs(dx) > 1) {
+      ped.x += Math.sign(dx) * 1.5;
+    }
     if (ped.scaredTimer <= 0) {
       ped.scared = false;
+      ped.wandering = false;
+    }
+  } else if (ped.wandering) {
+    // Drifting into / across bike lane
+    ped.x += ped.onLeft ? PED_WANDER_SPEED : -PED_WANDER_SPEED;
+
+    // If they've crossed all the way through, start drifting back (or just keep going)
+    const pastBikeLane = ped.onLeft
+      ? ped.x > BIKE_RIGHT + 5
+      : ped.x < BIKE_LEFT - 5;
+
+    if (pastBikeLane) {
+      ped.wandering = false; // done wandering, just keep walking
     }
   } else {
-    // Wander towards road
-    if (Math.abs(ped.x - ped.targetX) > 1) {
-      ped.x += ped.wanderDir * ped.speed;
-    } else {
-      // Random lateral drift once on road
-      ped.x += (Math.random() - 0.5) * 0.5;
+    // Walking on sidewalk — random chance to wander into bike lane
+    if (Math.random() < PED_WANDER_CHANCE) {
+      ped.wandering = true;
     }
+
+    // Slight natural lateral drift while walking
+    ped.x += (Math.random() - 0.5) * 0.3;
   }
 
   // Off screen? Deactivate
-  if (ped.y > 260) {
+  if (ped.y > GAME_H + 20) {
     ped.active = false;
   }
 }
@@ -69,7 +106,7 @@ export function checkBellEffect(ped, player) {
 
   if (dist < BELL_RANGE) {
     ped.scared = true;
-    ped.scaredTimer = 60; // frames to stay scared
+    ped.scaredTimer = 60;
   }
 }
 
