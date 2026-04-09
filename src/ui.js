@@ -142,7 +142,11 @@ export function drawHUD(ctx, player) {
   }
 
   // Zone warning
-  if (player.zone === 'car') {
+  if (player.zone === 'grass') {
+    ctx.fillStyle = '#44cc44';
+    ctx.font = '5px monospace';
+    ctx.fillText('GRASS!', 2, 40);
+  } else if (player.zone === 'car') {
     ctx.fillStyle = '#ff4444';
     ctx.font = '5px monospace';
     ctx.fillText('CAR LANE!', 2, 40);
@@ -173,10 +177,11 @@ export function drawTitleScreen(ctx, frame) {
 
   ctx.fillStyle = '#888';
   ctx.font = '5px monospace';
-  ctx.fillText('LEFT: sidewalk (potholes!)', GAME_W / 2, 158);
-  ctx.fillText('CENTER: bike path (people)', GAME_W / 2, 168);
-  ctx.fillText('RIGHT: car road (cars!)', GAME_W / 2, 178);
-  ctx.fillText('some have AirPods, dogs, gfs', GAME_W / 2, 188);
+  ctx.fillText('GRASS: sloped! (trees!)', GAME_W / 2, 153);
+  ctx.fillText('SIDEWALK: potholes!', GAME_W / 2, 163);
+  ctx.fillText('BIKE PATH: people', GAME_W / 2, 173);
+  ctx.fillText('CAR ROAD: cars!', GAME_W / 2, 183);
+  ctx.fillText('some have AirPods, dogs, gfs', GAME_W / 2, 193);
 
   if (Math.floor(frame / 30) % 2 === 0) {
     ctx.fillStyle = COLORS.bell;

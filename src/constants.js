@@ -39,9 +39,15 @@ export const BIKE_R_CENTER = BIKE_R_LEFT + BIKE_W / 2;
 export const SIDE_R_LEFT = BIKE_R_RIGHT;
 export const SIDE_R_RIGHT = SIDE_R_LEFT + SIDEWALK_W;
 
-// Full playable width
-export const PLAY_LEFT = SIDE_L_LEFT;
-export const PLAY_RIGHT = SIDE_R_RIGHT;
+// Full playable width (includes grass)
+export const PLAY_LEFT = 4;
+export const PLAY_RIGHT = GAME_W - 4;
+
+// Grass slope physics
+export const GRASS_SLOPE_FORCE = 0.35;    // lateral drift towards road
+export const GRASS_WOBBLE_AMP = 0.5;      // random lateral instability
+export const GRASS_FRICTION = 0.003;      // extra rolling resistance on grass
+export const GRASS_SHAKE_BASE = 0.8;      // base screen shake on grass
 
 // Player — downhill physics
 export const PLAYER_SPEED = 1.5;
