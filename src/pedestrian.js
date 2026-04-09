@@ -11,6 +11,24 @@ export function createPedestrian() {
   const hasANC = Math.random() < PED_ANC_CHANCE;
   const onLeft = Math.random() > 0.5;
 
+  // Pedestrian type variety
+  const typeRoll = Math.random();
+  let type, collisionW, partnerShirt, dogColor;
+  if (typeRoll < 0.20) {
+    type = 'couple';
+    collisionW = 7;
+    const shirts = ['#5b8c5a', '#4a7aab', '#d4956a', '#8b6bb5', '#c45b4a'];
+    partnerShirt = shirts[Math.floor(Math.random() * shirts.length)];
+  } else if (typeRoll < 0.35) {
+    type = 'dogWalker';
+    collisionW = 8;
+    const colors = ['#8B5E3C', '#333', '#d4a86c', '#bbb'];
+    dogColor = colors[Math.floor(Math.random() * colors.length)];
+  } else {
+    type = 'solo';
+    collisionW = 5;
+  }
+
   const sideLeft = onLeft ? SIDE_L_LEFT : SIDE_R_LEFT;
   const sideRight = onLeft ? SIDE_L_RIGHT : SIDE_R_RIGHT;
   const bikeLeft = onLeft ? BIKE_L_LEFT : BIKE_R_LEFT;
@@ -49,6 +67,10 @@ export function createPedestrian() {
     walkSpeed: PED_WALK_SPEED + Math.random() * 0.2,
     frame: 0,
     active: true,
+    type,
+    collisionW,
+    partnerShirt,
+    dogColor,
   };
 }
 
@@ -110,5 +132,5 @@ export function checkBellEffect(ped, player) {
 export function checkCollision(ped, player) {
   const dx = Math.abs(ped.x - player.x);
   const dy = Math.abs(ped.y - player.y);
-  return dx < 5 && dy < 8;
+  return dx < (ped.collisionW || 5) && dy < 8;
 }
