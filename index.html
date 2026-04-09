@@ -16,7 +16,6 @@
       height: 100%;
       overflow: hidden;
       background: #000;
-      touch-action: none;
       -webkit-user-select: none;
       user-select: none;
       overscroll-behavior: none;
@@ -27,33 +26,143 @@
       height: 100dvh;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+      touch-action: none;
     }
+
+    /* ── on-screen controls ── */
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0 10px env(safe-area-inset-bottom, 10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 10;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .ctrl-group {
+      display: flex;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .ctrl-btn {
+      width: 56px;
+      height: 56px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.35);
+      color: rgba(255,255,255,0.7);
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      transition: background 0.05s;
+    }
+    .ctrl-btn.pressed {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .ctrl-btn span {
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* steer buttons slightly larger */
+    .ctrl-btn.steer {
+      width: 64px;
+      height: 64px;
+      font-size: 26px;
+    }
+
+    /* label under button */
+    .ctrl-labeled {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      pointer-events: auto;
+    }
+    .ctrl-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.35);
+      font-family: system-ui, sans-serif;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+
+    /* top-right mute */
     #mute-btn {
       position: fixed;
-      top: 8px;
+      top: max(8px, env(safe-area-inset-top));
       right: 8px;
       z-index: 10;
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.5);
-      color: #fff;
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.4);
+      color: rgba(255,255,255,0.6);
       font-size: 18px;
-      line-height: 36px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
       padding: 0;
     }
-    #mute-btn:active { background: rgba(0,0,0,0.7); }
+    #mute-btn.muted {
+      opacity: 0.4;
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    /* hide buttons on desktop (keyboard works) */
+    @media (hover: hover) and (pointer: fine) {
+      .controls { display: none; }
+    }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
-  <button id="mute-btn" aria-label="Toggle mute">♪</button>
+
+  <button id="mute-btn" aria-label="Toggle mute"><span>♪</span></button>
+
+  <div class="controls">
+    <!-- left: steering -->
+    <div class="ctrl-group">
+      <div class="ctrl-labeled">
+        <button class="ctrl-btn steer" data-key="ArrowLeft"><span>◀</span></button>
+      </div>
+      <div class="ctrl-labeled">
+        <button class="ctrl-btn steer" data-key="ArrowRight"><span>▶</span></button>
+      </div>
+    </div>
+
+    <!-- right: actions -->
+    <div class="ctrl-group">
+      <div class="ctrl-labeled">
+        <button class="ctrl-btn" data-key="ArrowDown"><span>▼</span></button>
+        <span class="ctrl-label">BRAKE</span>
+      </div>
+      <div class="ctrl-labeled">
+        <button class="ctrl-btn" data-key="Space"><span>🔔</span></button>
+        <span class="ctrl-label">BELL</span>
+      </div>
+      <div class="ctrl-labeled">
+        <button class="ctrl-btn" data-key="ArrowUp"><span>▲</span></button>
+        <span class="ctrl-label">PEDAL</span>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
