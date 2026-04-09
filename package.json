@@ -1,0 +1,9 @@
+{
+  "name": "downhill-cyclist",
+  "version": "0.1.0",
+  "description": "Pixel art game - ride a bicycle downhill dodging pedestrians",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "private": true
+}
