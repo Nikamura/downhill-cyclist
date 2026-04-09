@@ -1,5 +1,8 @@
 import {
-  BIKE_CENTER, BIKE_LEFT, BIKE_RIGHT,
+  BIKE_L_CENTER, BIKE_L_LEFT, BIKE_L_RIGHT,
+  BIKE_R_LEFT, BIKE_R_RIGHT,
+  CAR_LEFT, CAR_RIGHT,
+  PLAY_LEFT, PLAY_RIGHT,
   PLAYER_SPEED, BASE_SCROLL_SPEED, SPEED_TO_KMH,
   GRAVITY_ACCEL, AIR_DRAG, PEDAL_ACCEL, BRAKE_DECEL, MIN_SPEED,
   BELL_COOLDOWN,
@@ -8,7 +11,7 @@ import { isDown, consumeKey } from './input.js';
 
 export function createPlayer() {
   return {
-    x: BIKE_CENTER,
+    x: BIKE_L_CENTER,
     y: 200,
     speed: BASE_SCROLL_SPEED,
     kmh: BASE_SCROLL_SPEED * SPEED_TO_KMH,
@@ -20,15 +23,16 @@ export function createPlayer() {
     frame: 0,
     score: 0,
     alive: true,
-    maxKmh: 0,          // track top speed for game over
-    screenShake: 0,      // intensity increases with speed
+    maxKmh: 0,
+    screenShake: 0,
+    zone: 'bike', // 'sidewalk' | 'bike' | 'car'
   };
 }
 
 export function updatePlayer(player) {
   player.frame++;
 
-  // --- Horizontal movement (faster steering at low speed, twitchier at high) ---
+  // --- Horizontal movement ---
   const steerSpeed = PLAYER_SPEED + player.speed * 0.15;
   if (isDown('ArrowLeft') || isDown('KeyA')) {
     player.x -= steerSpeed;
@@ -36,38 +40,42 @@ export function updatePlayer(player) {
   if (isDown('ArrowRight') || isDown('KeyD')) {
     player.x += steerSpeed;
   }
-  player.x = Math.max(BIKE_LEFT + 3, Math.min(BIKE_RIGHT - 3, player.x));
+
+  // Can go across all zones
+  player.x = Math.max(PLAY_LEFT + 3, Math.min(PLAY_RIGHT - 3, player.x));
+
+  // Track which zone the player is in
+  if (player.x >= CAR_LEFT && player.x <= CAR_RIGHT) {
+    player.zone = 'car';
+  } else if ((player.x >= BIKE_L_LEFT && player.x <= BIKE_L_RIGHT) ||
+             (player.x >= BIKE_R_LEFT && player.x <= BIKE_R_RIGHT)) {
+    player.zone = 'bike';
+  } else {
+    player.zone = 'sidewalk';
+  }
 
   // --- Downhill physics ---
-  // 1. Gravity always pulls you faster (it's a hill!)
   let accel = GRAVITY_ACCEL;
 
-  // 2. Pedaling — hold UP to be a maniac
   player.pedaling = isDown('ArrowUp') || isDown('KeyW');
   if (player.pedaling) {
     accel += PEDAL_ACCEL;
   }
 
-  // 3. Braking
   player.braking = isDown('ArrowDown') || isDown('KeyS');
   if (player.braking) {
     accel -= BRAKE_DECEL;
   }
 
-  // 4. Air drag — increases with speed² (this is what caps terminal velocity)
   const drag = AIR_DRAG * player.speed * player.speed;
   accel -= drag;
 
-  // Apply
   player.speed += accel;
   player.speed = Math.max(MIN_SPEED, player.speed);
-  // No hard cap — air drag is the natural limit, but pedaling can push past it
 
-  // Convert to km/h for display
   player.kmh = player.speed * SPEED_TO_KMH;
   player.maxKmh = Math.max(player.maxKmh, player.kmh);
 
-  // Screen shake scales with speed (subtle below 80, noticeable above 120)
   player.screenShake = Math.max(0, (player.kmh - 60) * 0.02);
 
   // --- Bell ---
@@ -86,6 +94,5 @@ export function updatePlayer(player) {
     }
   }
 
-  // Score = distance in meters
   player.score += player.speed;
 }

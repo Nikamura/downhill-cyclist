@@ -1,35 +1,37 @@
 import {
-  BIKE_LEFT, BIKE_RIGHT, BIKE_CENTER, BIKE_PATH_WIDTH,
-  SIDEWALK_L_LEFT, SIDEWALK_L_RIGHT, SIDEWALK_R_LEFT, SIDEWALK_R_RIGHT,
+  BIKE_L_LEFT, BIKE_L_RIGHT, BIKE_W,
+  BIKE_R_LEFT, BIKE_R_RIGHT,
+  SIDE_L_LEFT, SIDE_L_RIGHT, SIDEWALK_W,
+  SIDE_R_LEFT, SIDE_R_RIGHT,
   PED_ANC_CHANCE, PED_WALK_SPEED, PED_WANDER_CHANCE, PED_WANDER_SPEED,
   BELL_RANGE, GAME_H,
 } from './constants.js';
 
-export function createPedestrian(scrollSpeed) {
+export function createPedestrian() {
   const hasANC = Math.random() < PED_ANC_CHANCE;
   const onLeft = Math.random() > 0.5;
 
-  const sidewalkCenter = onLeft
-    ? (SIDEWALK_L_LEFT + SIDEWALK_L_RIGHT) / 2
-    : (SIDEWALK_R_LEFT + SIDEWALK_R_RIGHT) / 2;
+  const sideLeft = onLeft ? SIDE_L_LEFT : SIDE_R_LEFT;
+  const sideRight = onLeft ? SIDE_L_RIGHT : SIDE_R_RIGHT;
+  const bikeLeft = onLeft ? BIKE_L_LEFT : BIKE_R_LEFT;
+  const bikeRight = onLeft ? BIKE_L_RIGHT : BIKE_R_RIGHT;
 
-  const offset = (Math.random() - 0.5) * 10;
+  const sidewalkCenter = (sideLeft + sideRight) / 2;
+  const offset = (Math.random() - 0.5) * (SIDEWALK_W - 6);
 
-  // Spawn ahead of the player (top of screen or even above)
-  // At higher speeds, they appear further ahead so you have time to react
   const spawnY = -10 - Math.random() * 20;
 
-  // Some pedestrians are already wandering into the bike lane when they spawn
+  // Some already wandering into adjacent bike lane
   const alreadyWandering = Math.random() < 0.35;
   let startX = sidewalkCenter + offset;
 
   if (alreadyWandering) {
-    // Already partially or fully in the bike lane
-    const progress = Math.random(); // 0 = sidewalk edge, 1 = middle of bike path
+    const progress = Math.random();
+    // Drift from sidewalk toward the bike lane
     if (onLeft) {
-      startX = BIKE_LEFT + progress * (BIKE_PATH_WIDTH / 2);
+      startX = bikeLeft + progress * (BIKE_W / 2);
     } else {
-      startX = BIKE_RIGHT - progress * (BIKE_PATH_WIDTH / 2);
+      startX = bikeRight - progress * (BIKE_W / 2);
     }
   }
 
@@ -40,6 +42,8 @@ export function createPedestrian(scrollSpeed) {
     onLeft,
     hasANC,
     wandering: alreadyWandering,
+    // Wander direction: left peds drift right, right peds drift left (into their bike lane)
+    wanderDir: onLeft ? 1 : -1,
     scared: false,
     scaredTimer: 0,
     walkSpeed: PED_WALK_SPEED + Math.random() * 0.2,
@@ -51,15 +55,11 @@ export function createPedestrian(scrollSpeed) {
 export function updatePedestrian(ped, player) {
   ped.frame++;
 
-  // Pedestrians scroll down relative to player speed
-  // They're walking the same direction but slower, so net movement is downward
   ped.y += player.speed - ped.walkSpeed;
 
   if (ped.scared) {
-    // Heard the bell — hurry back to sidewalk
     ped.scaredTimer--;
-    const retreatTarget = ped.homeX;
-    const dx = retreatTarget - ped.x;
+    const dx = ped.homeX - ped.x;
     if (Math.abs(dx) > 1) {
       ped.x += Math.sign(dx) * 1.5;
     }
@@ -68,28 +68,25 @@ export function updatePedestrian(ped, player) {
       ped.wandering = false;
     }
   } else if (ped.wandering) {
-    // Drifting into / across bike lane
-    ped.x += ped.onLeft ? PED_WANDER_SPEED : -PED_WANDER_SPEED;
+    ped.x += ped.wanderDir * PED_WANDER_SPEED;
 
-    // If they've crossed all the way through, start drifting back (or just keep going)
-    const pastBikeLane = ped.onLeft
-      ? ped.x > BIKE_RIGHT + 5
-      : ped.x < BIKE_LEFT - 5;
+    // If they've crossed the bike path, stop wandering
+    const bikeRight = ped.onLeft ? BIKE_L_RIGHT : BIKE_R_RIGHT;
+    const bikeLeft = ped.onLeft ? BIKE_L_LEFT : BIKE_R_LEFT;
+    const past = ped.onLeft
+      ? ped.x > bikeRight + 3
+      : ped.x < bikeLeft - 3;
 
-    if (pastBikeLane) {
-      ped.wandering = false; // done wandering, just keep walking
+    if (past) {
+      ped.wandering = false;
     }
   } else {
-    // Walking on sidewalk — random chance to wander into bike lane
     if (Math.random() < PED_WANDER_CHANCE) {
       ped.wandering = true;
     }
-
-    // Slight natural lateral drift while walking
     ped.x += (Math.random() - 0.5) * 0.3;
   }
 
-  // Off screen? Deactivate
   if (ped.y > GAME_H + 20) {
     ped.active = false;
   }
@@ -97,7 +94,7 @@ export function updatePedestrian(ped, player) {
 
 export function checkBellEffect(ped, player) {
   if (!player.bellActive) return;
-  if (ped.hasANC) return;  // Can't hear the bell!
+  if (ped.hasANC) return;
   if (ped.scared) return;
 
   const dx = ped.x - player.x;

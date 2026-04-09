@@ -141,6 +141,17 @@ export function drawHUD(ctx, player) {
     ctx.fillText('PEDAL!', 2, 32);
   }
 
+  // Zone warning
+  if (player.zone === 'car') {
+    ctx.fillStyle = '#ff4444';
+    ctx.font = '5px monospace';
+    ctx.fillText('CAR LANE!', 2, 40);
+  } else if (player.zone === 'sidewalk') {
+    ctx.fillStyle = '#ffaa44';
+    ctx.font = '5px monospace';
+    ctx.fillText('SIDEWALK', 2, 40);
+  }
+
   // Speedometer
   drawSpeedometer(ctx, player);
 }
@@ -157,11 +168,17 @@ export function drawTitleScreen(ctx, frame) {
 
   ctx.font = '6px monospace';
   ctx.fillStyle = '#aaa';
-  ctx.fillText('← → dodge', GAME_W / 2, 110);
-  ctx.fillText('↑ PEDAL (maniac)', GAME_W / 2, 122);
-  ctx.fillText('↓ brake', GAME_W / 2, 134);
-  ctx.fillText('SPACE ring bell', GAME_W / 2, 146);
-  ctx.fillText('(some wear ANC!)', GAME_W / 2, 158);
+  ctx.fillText('← → swerve', GAME_W / 2, 106);
+  ctx.fillText('↑ PEDAL (maniac)', GAME_W / 2, 118);
+  ctx.fillText('↓ brake', GAME_W / 2, 130);
+  ctx.fillText('SPACE ring bell', GAME_W / 2, 142);
+
+  ctx.fillStyle = '#888';
+  ctx.font = '5px monospace';
+  ctx.fillText('LEFT: sidewalk (potholes!)', GAME_W / 2, 158);
+  ctx.fillText('CENTER: bike path (people)', GAME_W / 2, 168);
+  ctx.fillText('RIGHT: car road (cars!)', GAME_W / 2, 178);
+  ctx.fillText('some people wear ANC', GAME_W / 2, 188);
 
   if (Math.floor(frame / 30) % 2 === 0) {
     ctx.fillStyle = COLORS.bell;
@@ -171,14 +188,20 @@ export function drawTitleScreen(ctx, frame) {
   ctx.textAlign = 'left';
 }
 
-export function drawGameOver(ctx, player, frame) {
+export function drawGameOver(ctx, player, frame, crashReason) {
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, GAME_W, GAME_H);
 
   ctx.fillStyle = '#e63946';
   ctx.font = '10px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('CRASH!', GAME_W / 2, 70);
+  ctx.fillText('CRASH!', GAME_W / 2, 65);
+
+  if (crashReason) {
+    ctx.fillStyle = '#ffaa44';
+    ctx.font = '6px monospace';
+    ctx.fillText(crashReason, GAME_W / 2, 78);
+  }
 
   ctx.fillStyle = COLORS.ui;
   ctx.font = '8px monospace';

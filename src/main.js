@@ -1,7 +1,9 @@
-import { GAME_W, GAME_H, SCALE, PED_SPAWN_INTERVAL_MIN, PED_SPAWN_INTERVAL_MAX } from './constants.js';
+import { GAME_W, GAME_H, SCALE, PED_SPAWN_INTERVAL_MIN, PED_SPAWN_INTERVAL_MAX, CAR_SPAWN_INTERVAL_MIN, CAR_SPAWN_INTERVAL_MAX, POTHOLE_SPAWN_CHANCE } from './constants.js';
 import { initInput, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createPedestrian, updatePedestrian, checkBellEffect, checkCollision } from './pedestrian.js';
+import { createCar, updateCar, checkCarCollision, drawCar } from './hazards.js';
+import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from './hazards.js';
 import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
@@ -14,11 +16,15 @@ const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 // --- Game state ---
-let state = 'title'; // title | playing | gameover
+let state = 'title';
 let player = null;
 let pedestrians = [];
-let spawnTimer = 0;
+let cars = [];
+let potholes = [];
+let pedSpawnTimer = 0;
+let carSpawnTimer = 0;
 let frame = 0;
+let crashReason = '';
 
 initInput();
 initScenery();
@@ -27,14 +33,16 @@ function startGame() {
   state = 'playing';
   player = createPlayer();
   pedestrians = [];
-  spawnTimer = 60;
+  cars = [];
+  potholes = [];
+  pedSpawnTimer = 60;
+  carSpawnTimer = 80;
+  crashReason = '';
 }
 
 // --- Main loop ---
 function gameLoop() {
   frame++;
-
-  // Clear and set up scaling
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
 
   switch (state) {
@@ -59,38 +67,77 @@ function updateTitle() {
   }
 }
 
+function crash(reason) {
+  player.alive = false;
+  crashReason = reason;
+  state = 'gameover';
+}
+
 function updatePlaying() {
-  // Update
+  // --- Update ---
   updatePlayer(player);
   updateRoad(player.speed);
   updateScenery(player.speed);
 
-  // Spawn pedestrians — more frequently at higher speeds
-  spawnTimer--;
-  if (spawnTimer <= 0) {
-    pedestrians.push(createPedestrian(player.speed));
-    // Scale spawn rate: at 30 km/h ~90 frames, at 150+ km/h ~20 frames
+  // Spawn pedestrians
+  pedSpawnTimer--;
+  if (pedSpawnTimer <= 0) {
+    pedestrians.push(createPedestrian());
     const speedFactor = Math.min(1, (player.kmh - 30) / 150);
     const interval = PED_SPAWN_INTERVAL_MAX -
       speedFactor * (PED_SPAWN_INTERVAL_MAX - PED_SPAWN_INTERVAL_MIN);
-    spawnTimer = Math.floor(interval + Math.random() * 20);
+    pedSpawnTimer = Math.floor(interval + Math.random() * 20);
+
+    // Chance to also spawn a pothole
+    if (Math.random() < POTHOLE_SPAWN_CHANCE) {
+      potholes.push(createPothole());
+    }
+  }
+
+  // Spawn cars
+  carSpawnTimer--;
+  if (carSpawnTimer <= 0) {
+    cars.push(createCar(player.speed));
+    const interval = CAR_SPAWN_INTERVAL_MIN +
+      Math.random() * (CAR_SPAWN_INTERVAL_MAX - CAR_SPAWN_INTERVAL_MIN);
+    carSpawnTimer = Math.floor(interval);
   }
 
   // Update pedestrians
   for (const ped of pedestrians) {
     updatePedestrian(ped, player);
     checkBellEffect(ped, player);
-
     if (ped.active && checkCollision(ped, player)) {
-      player.alive = false;
-      state = 'gameover';
+      crash('Hit a pedestrian!');
+      return;
     }
   }
 
-  // Remove inactive
-  pedestrians = pedestrians.filter((p) => p.active);
+  // Update cars
+  for (const car of cars) {
+    updateCar(car, player);
+    if (car.active && checkCarCollision(car, player)) {
+      crash('Hit by a car!');
+      return;
+    }
+  }
 
-  // Draw — apply screen shake at high speed
+  // Update potholes
+  for (const pot of potholes) {
+    updatePothole(pot, player.speed);
+    if (pot.active && checkPotholeCollision(pot, player)) {
+      crash('Hit a pothole!');
+      return;
+    }
+  }
+
+  // Cleanup
+  pedestrians = pedestrians.filter((p) => p.active);
+  cars = cars.filter((c) => c.active);
+  potholes = potholes.filter((p) => p.active);
+
+  // --- Draw ---
+  // Screen shake at high speed
   if (player.screenShake > 0.5) {
     const s = player.screenShake;
     ctx.setTransform(SCALE, 0, 0, SCALE,
@@ -102,35 +149,47 @@ function updatePlaying() {
   drawRoad(ctx);
   drawScenery(ctx);
 
+  // Draw potholes (on the road surface)
+  for (const pot of potholes) {
+    drawPothole(ctx, pot);
+  }
+
+  // Draw pedestrians
   for (const ped of pedestrians) {
     drawPedestrian(ctx, ped.x, ped.y, ped.hasANC, ped.scared, ped.frame);
   }
 
+  // Draw player
   drawBicycle(ctx, player.x, player.y, player.frame, player.braking);
 
   if (player.bellActive) {
     drawBellRing(ctx, player.x, player.y, player.bellProgress);
   }
 
-  // Reset transform for HUD (no shake on UI)
+  // Draw cars (on top of player if they're overtaking)
+  for (const car of cars) {
+    drawCar(ctx, car);
+  }
+
+  // Reset transform for HUD (no shake)
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   drawHUD(ctx, player);
 }
 
 function updateGameOver() {
-  // Keep drawing the last frame
   drawRoad(ctx);
   drawScenery(ctx);
+  for (const pot of potholes) drawPothole(ctx, pot);
   for (const ped of pedestrians) {
     drawPedestrian(ctx, ped.x, ped.y, ped.hasANC, ped.scared, ped.frame);
   }
   drawBicycle(ctx, player.x, player.y, player.frame, player.braking);
-  drawGameOver(ctx, player, frame);
+  for (const car of cars) drawCar(ctx, car);
+  drawGameOver(ctx, player, frame, crashReason);
 
   if (consumeKey('Enter') || consumeKey('Space')) {
     startGame();
   }
 }
 
-// Start
 gameLoop();
