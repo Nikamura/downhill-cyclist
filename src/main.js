@@ -7,6 +7,7 @@ import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from
 import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
+import { initTouch } from './touch.js';
 
 // --- Setup canvas ---
 const canvas = document.getElementById('game');
@@ -27,6 +28,7 @@ let frame = 0;
 let crashReason = '';
 
 initInput();
+initTouch();
 initScenery();
 
 function startGame() {

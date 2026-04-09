@@ -11,6 +11,11 @@ export function initInput() {
   });
 }
 
+// For touch controls
+export function setKey(code, pressed) {
+  keys[code] = pressed;
+}
+
 export function isDown(code) {
   return !!keys[code];
 }

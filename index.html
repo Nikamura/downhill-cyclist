@@ -2,414 +2,607 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DOWNHILL CYCLIST — Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#bfbbb3">
+  <title>Downhill Cyclist</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cabinet-dark: #0a0a0f;
-      --cabinet-body: #1a1420;
-      --cabinet-accent: #2a1a35;
-      --bezel: #111118;
-      --bezel-edge: #2a2a3a;
-      --crt-glow: #4ae8c4;
-      --crt-glow-warm: #e8c44a;
-      --neon-pink: #ff2a6d;
-      --neon-blue: #05d9e8;
-      --neon-yellow: #f5e642;
-      --worn-sticker: #c4442a;
-      --coin-gold: #d4a017;
+      --gb-body: #bfbbb3;
+      --gb-body-hi: #ccc8c0;
+      --gb-body-lo: #a8a49c;
+      --gb-bezel: #7d7973;
+      --gb-bezel-inner: #605c56;
+      --gb-lcd: #8b9e0f;
+      --gb-lcd-dark: #6b7e04;
+      --gb-dpad: #222226;
+      --gb-dpad-hi: #38383c;
+      --gb-btn: #8b2252;
+      --gb-btn-hi: #a03468;
+      --gb-btn-ss: #807c76;
+      --gb-blue: #1e1e98;
+      --gb-line-m: #9b2060;
+      --gb-line-b: #2020a0;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      height: 100%;
+    }
 
     body {
-      background: var(--cabinet-dark);
+      background: #2a2520;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      min-height: 100dvh;
       overflow: hidden;
-      font-family: 'VT323', monospace;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+      font-family: 'Press Start 2P', monospace;
     }
 
-    /* ── dim arcade floor ambient ── */
+    /* subtle wood-grain surface beneath */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 60% 50% at 50% 80%, rgba(74, 232, 196, 0.03) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 50% 40%, rgba(232, 196, 74, 0.02) 0%, transparent 60%),
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 2px,
-          rgba(255,255,255,0.008) 2px,
-          rgba(255,255,255,0.008) 4px
-        );
+        repeating-linear-gradient(87deg, transparent 0, transparent 11px, rgba(0,0,0,0.03) 11px, rgba(0,0,0,0.03) 12px),
+        radial-gradient(ellipse 80% 60% at 50% 50%, rgba(60,45,30,0.15), transparent);
       pointer-events: none;
-      z-index: 0;
     }
 
-    /* ── cabinet shell ── */
-    .cabinet {
+    /* ═══════════════════════════════════
+       GAME BOY BODY
+       ═══════════════════════════════════ */
+    .gameboy {
+      width: min(90vw, 380px);
+      height: min(98dvh, 740px);
+      background: linear-gradient(170deg, var(--gb-body-hi) 0%, var(--gb-body) 40%, var(--gb-body-lo) 100%);
+      border-radius: 12px 12px 12px 40px;
+      display: flex;
+      flex-direction: column;
       position: relative;
-      z-index: 1;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        inset 0 -1px 0 rgba(0,0,0,0.15),
+        3px 4px 0 #8a867e,
+        4px 6px 16px rgba(0,0,0,0.45),
+        0 0 60px rgba(139,158,15,0.06);
+      overflow: hidden;
+    }
+
+    /* right-side grip ridges */
+    .gameboy::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 25%;
+      width: 5px;
+      height: 30%;
+      background: repeating-linear-gradient(
+        0deg,
+        var(--gb-body-lo) 0px, var(--gb-body-lo) 3px,
+        var(--gb-body-hi) 3px, var(--gb-body-hi) 5px
+      );
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* ── top strip (power led, label) ── */
+    .gb-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px 0;
+      flex: 0 0 auto;
+    }
+
+    .power-area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .power-led {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #cc2222;
+      box-shadow: 0 0 4px #cc2222, 0 0 10px rgba(204,34,34,0.4);
+      animation: led-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes led-pulse {
+      0%, 100% { box-shadow: 0 0 4px #cc2222, 0 0 10px rgba(204,34,34,0.4); }
+      50% { box-shadow: 0 0 3px #cc2222, 0 0 6px rgba(204,34,34,0.2); }
+    }
+
+    .power-label {
+      font-size: 5px;
+      color: var(--gb-bezel);
+      letter-spacing: 1px;
+    }
+
+    .dot-matrix-label {
+      font-size: 5px;
+      color: var(--gb-bezel);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── screen section ── */
+    .gb-screen-section {
+      flex: 1 1 0;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
+      justify-content: center;
+      padding: 4px 16px 0;
     }
 
-    /* ── marquee (top sign) ── */
-    .marquee {
-      position: relative;
-      width: 540px;
-      padding: 14px 20px 18px;
-      background:
-        linear-gradient(180deg, #1a0a22 0%, #0f0816 100%);
-      border: 2px solid var(--bezel-edge);
-      border-bottom: none;
-      border-radius: 12px 12px 0 0;
-      text-align: center;
-      overflow: hidden;
+    /* colored lines above screen bezel */
+    .color-lines {
+      width: 70%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 3px;
+      padding-left: 20%;
     }
 
-    /* marquee inner glow */
-    .marquee::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 100% at 50% 100%, rgba(255, 42, 109, 0.15) 0%, transparent 60%);
-      pointer-events: none;
+    .color-lines span {
+      height: 1px;
+      border-radius: 1px;
     }
+    .color-lines .line-m { background: var(--gb-line-m); }
+    .color-lines .line-b { background: var(--gb-line-b); }
 
-    .marquee-title {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 22px;
-      letter-spacing: 3px;
-      background: linear-gradient(180deg, var(--neon-yellow) 0%, var(--neon-pink) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.6))
-              drop-shadow(0 0 30px rgba(245, 230, 66, 0.3));
-      line-height: 1.3;
-    }
-
-    .marquee-sub {
-      font-family: 'VT323', monospace;
-      font-size: 16px;
-      color: var(--neon-blue);
-      letter-spacing: 6px;
-      text-transform: uppercase;
-      margin-top: 4px;
-      text-shadow: 0 0 8px rgba(5, 217, 232, 0.5);
-    }
-
-    /* ── bezel (monitor frame) ── */
-    .bezel {
-      position: relative;
-      background: var(--bezel);
-      border: 2px solid var(--bezel-edge);
-      border-top: none;
-      padding: 20px 24px 16px;
-      border-radius: 0 0 6px 6px;
+    /* screen bezel */
+    .gb-bezel {
+      width: 82%;
+      max-height: 100%;
+      background: linear-gradient(175deg, var(--gb-bezel) 0%, var(--gb-bezel-inner) 100%);
+      border-radius: 10px;
+      padding: 10px;
       box-shadow:
-        inset 0 2px 20px rgba(0,0,0,0.8),
-        0 20px 60px rgba(0,0,0,0.6),
-        0 0 120px rgba(74, 232, 196, 0.04);
+        inset 0 1px 3px rgba(0,0,0,0.3),
+        0 1px 0 rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: auto;
     }
 
-    /* bezel screws */
-    .bezel::before,
-    .bezel::after {
-      content: '';
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #555, #222);
-      border: 1px solid #333;
-      top: 8px;
-    }
-    .bezel::before { left: 10px; }
-    .bezel::after { right: 10px; }
-
-    /* ── CRT screen wrapper ── */
-    .crt-wrap {
+    /* LCD screen */
+    .gb-lcd {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      max-height: 100%;
+      background: var(--gb-lcd);
+      border-radius: 3px;
       position: relative;
-      border-radius: 8px;
       overflow: hidden;
       box-shadow:
-        0 0 2px 1px rgba(74, 232, 196, 0.15),
-        inset 0 0 40px rgba(0,0,0,0.5);
-    }
-
-    /* scanlines */
-    .crt-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.12) 2px,
-        rgba(0, 0, 0, 0.12) 4px
-      );
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* phosphor bloom / vignette */
-    .crt-wrap::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(
-        ellipse 85% 80% at 50% 50%,
-        transparent 60%,
-        rgba(0, 0, 0, 0.5) 100%
-      );
-      pointer-events: none;
-      z-index: 3;
-    }
-
-    /* slight CRT curvature via subtle perspective */
-    .crt-wrap {
-      perspective: 800px;
+        inset 3px 3px 8px rgba(0,0,0,0.35),
+        inset -1px -1px 4px rgba(160,180,30,0.2);
     }
 
     canvas {
       display: block;
+      width: 100%;
+      height: 100%;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
-      border: none;
-      /* very subtle CRT warmth */
-      filter: contrast(1.05) saturate(1.1) brightness(1.02);
-    }
-
-    /* ── control panel (below screen) ── */
-    .controls-panel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 12px;
-      padding: 0 4px;
-    }
-
-    /* sticker labels */
-    .sticker {
-      display: inline-block;
-      padding: 3px 8px;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      letter-spacing: 0.5px;
-      border-radius: 2px;
-      transform: rotate(-1.5deg);
       position: relative;
+      z-index: 1;
+      /* subtle Game Boy LCD tint */
+      filter: saturate(0.45) sepia(18%) hue-rotate(50deg) contrast(1.18) brightness(0.85);
     }
 
-    .sticker--warn {
-      background: var(--worn-sticker);
-      color: #ffeedd;
-      box-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-    }
-    .sticker--warn::after {
+    /* dot-matrix pixel grid overlay */
+    .gb-lcd::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+      background:
+        repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.06) 2px 3px),
+        repeating-linear-gradient(90deg, transparent 0 2px, rgba(0,0,0,0.06) 2px 3px);
+      pointer-events: none;
+      z-index: 2;
+      mix-blend-mode: multiply;
+    }
+
+    /* ── branding ── */
+    .gb-brand {
+      text-align: center;
+      padding: 6px 0 2px;
+      flex: 0 0 auto;
+    }
+
+    .brand-prefix {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      font-style: italic;
+      color: var(--gb-blue);
+      letter-spacing: 0;
+    }
+
+    .brand-main {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--gb-blue);
+      letter-spacing: 3px;
+      margin-left: 4px;
+    }
+
+    .brand-tm {
+      font-size: 5px;
+      color: var(--gb-blue);
+      vertical-align: super;
+      margin-left: 1px;
+    }
+
+    /* ═══════════════════════════════════
+       CONTROLS
+       ═══════════════════════════════════ */
+    .gb-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 20px 0;
+      flex: 0 0 auto;
+    }
+
+    /* ── D-PAD ── */
+    .dpad {
+      width: 108px;
+      height: 108px;
+      position: relative;
+    }
+
+    /* cross visual (two overlapping bars) */
+    .dpad-cross {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .dpad-cross::before,
+    .dpad-cross::after {
+      content: '';
+      position: absolute;
+      background: linear-gradient(180deg, var(--gb-dpad-hi), var(--gb-dpad));
+      border-radius: 3px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 2px 4px rgba(0,0,0,0.3);
+    }
+    /* horizontal bar */
+    .dpad-cross::before {
+      top: 34px; left: 0; right: 0; height: 40px;
+    }
+    /* vertical bar */
+    .dpad-cross::after {
+      left: 34px; top: 0; bottom: 0; width: 40px;
+    }
+
+    /* center circle */
+    .dpad-center {
+      position: absolute;
+      top: 42px; left: 42px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--gb-dpad);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.06);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* invisible touch targets */
+    .dpad-btn {
+      position: absolute;
+      z-index: 2;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dpad-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
       border-radius: 2px;
+      transition: background 0.05s;
+    }
+    .dpad-btn.pressed::after {
+      background: rgba(255,255,255,0.08);
     }
 
-    .sticker--info {
-      background: #1a3a5a;
-      color: var(--neon-blue);
-      box-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-      transform: rotate(0.8deg);
+    .dpad-up    { top: 0; left: 34px; width: 40px; height: 38px; }
+    .dpad-down  { bottom: 0; left: 34px; width: 40px; height: 38px; }
+    .dpad-left  { left: 0; top: 34px; width: 38px; height: 40px; }
+    .dpad-right { right: 0; top: 34px; width: 38px; height: 40px; }
+
+    /* directional arrows on d-pad (visual hint) */
+    .dpad-up::before,
+    .dpad-down::before,
+    .dpad-left::before,
+    .dpad-right::before {
+      content: '';
+      position: absolute;
+      width: 0; height: 0;
+      opacity: 0.15;
+    }
+    .dpad-up::before {
+      top: 8px; left: 50%; transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 6px solid #fff;
+    }
+    .dpad-down::before {
+      bottom: 8px; left: 50%; transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #fff;
+    }
+    .dpad-left::before {
+      left: 8px; top: 50%; transform: translateY(-50%);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-right: 6px solid #fff;
+    }
+    .dpad-right::before {
+      right: 8px; top: 50%; transform: translateY(-50%);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid #fff;
     }
 
-    /* coin slot */
-    .coin-slot {
+    /* ── A / B BUTTONS ── */
+    .ab-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transform: rotate(-20deg);
+      margin-right: 8px;
+    }
+
+    .ab-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(160deg, var(--gb-btn-hi), var(--gb-btn));
+      border: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        inset 0 -2px 0 rgba(0,0,0,0.2),
+        0 3px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      transition: box-shadow 0.05s, transform 0.05s;
+    }
+
+    .ab-btn.pressed {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 2px 4px rgba(0,0,0,0.3),
+        0 1px 2px rgba(0,0,0,0.2);
+      transform: translateY(1px);
+    }
+
+    .ab-btn-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--gb-blue);
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%) rotate(20deg);
+      pointer-events: none;
+    }
+
+    /* ── SELECT / START ── */
+    .gb-ss {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 8px 0 0;
+      transform: rotate(-25deg);
+      margin-left: 20px;
+      flex: 0 0 auto;
+    }
+
+    .ss-group {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
     }
 
-    .coin-slot-hole {
-      width: 28px;
-      height: 5px;
-      background: #000;
-      border: 1px solid #333;
-      border-radius: 2px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
-    }
-
-    .coin-slot-label {
-      font-family: 'Press Start 2P', monospace;
+    .ss-label {
       font-size: 5px;
-      color: #555;
+      color: var(--gb-blue);
       letter-spacing: 1px;
     }
 
-    /* ── status bar ── */
-    .status-bar {
+    .ss-btn {
+      width: 36px;
+      height: 10px;
+      background: linear-gradient(180deg, var(--gb-btn-ss), #706c66);
+      border: none;
+      border-radius: 5px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 1px 3px rgba(0,0,0,0.2);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 0.05s, transform 0.05s;
+    }
+
+    .ss-btn.pressed {
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+      transform: translateY(1px);
+    }
+
+    /* ── SPEAKER ── */
+    .gb-speaker-area {
+      flex: 0 0 auto;
       display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 10px;
-      padding: 6px 8px;
-      background: rgba(0,0,0,0.4);
-      border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.04);
+      justify-content: flex-end;
+      padding: 10px 28px 16px 0;
     }
 
-    .status-item {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      color: #4a4a5a;
-      letter-spacing: 1px;
-    }
-
-    .status-item span {
-      color: var(--crt-glow);
-      text-shadow: 0 0 6px rgba(74, 232, 196, 0.4);
-    }
-
-    .status-item--credit span {
-      color: var(--coin-gold);
-      text-shadow: 0 0 6px rgba(212, 160, 23, 0.4);
-    }
-
-    /* ── floating stickers on cabinet sides ── */
-    .side-decal {
-      position: absolute;
-      font-family: 'Press Start 2P', monospace;
-      color: rgba(255,255,255,0.04);
-      font-size: 10px;
-      writing-mode: vertical-rl;
-      letter-spacing: 4px;
-      pointer-events: none;
-      user-select: none;
-    }
-    .side-decal--left {
-      left: -44px;
-      top: 50%;
-      transform: translateY(-50%) rotate(180deg);
-    }
-    .side-decal--right {
-      right: -44px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    /* ── LED indicator dots ── */
-    .leds {
+    .gb-speaker {
+      width: 44px;
+      height: 44px;
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      margin-top: 8px;
-    }
-    .led {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .led--on {
-      background: var(--neon-pink);
-      box-shadow: 0 0 6px var(--neon-pink), 0 0 12px rgba(255, 42, 109, 0.3);
-      animation: led-blink 2s ease-in-out infinite;
-    }
-    .led--dim {
-      background: #2a1520;
-    }
-    .led--green {
-      background: var(--crt-glow);
-      box-shadow: 0 0 6px var(--crt-glow), 0 0 12px rgba(74, 232, 196, 0.3);
+      gap: 4px;
+      transform: rotate(-28deg);
     }
 
-    @keyframes led-blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    .speaker-slot {
+      width: 28px;
+      height: 2px;
+      background: var(--gb-body-lo);
+      border-radius: 1px;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.25);
     }
 
-    /* ── ambient screen flicker (very subtle) ── */
-    @keyframes crt-flicker {
-      0%, 100% { opacity: 1; }
-      92% { opacity: 1; }
-      93% { opacity: 0.97; }
-      94% { opacity: 1; }
-    }
-    .crt-wrap {
-      animation: crt-flicker 8s linear infinite;
+    /* ── bottom edge label ── */
+    .gb-bottom {
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 0 0 8px;
     }
 
-    /* ── responsive ── */
-    @media (max-height: 760px) {
-      .marquee { padding: 10px 16px 12px; }
-      .marquee-title { font-size: 18px; }
-      .bezel { padding: 14px 18px 12px; }
+    .gb-bottom span {
+      font-size: 5px;
+      letter-spacing: 3px;
+      color: var(--gb-body-lo);
     }
 
-    @media (max-width: 600px) {
-      .marquee { width: 100vw; border-radius: 0; border-left: none; border-right: none; }
-      .bezel { border-left: none; border-right: none; border-radius: 0; }
-      .side-decal { display: none; }
+    /* ═══════════════════════════════════
+       RESPONSIVE — larger screens
+       ═══════════════════════════════════ */
+    @media (min-width: 481px) {
+      body {
+        /* center with some padding */
+        padding: 20px;
+      }
+
+      .gameboy {
+        width: 380px;
+        height: min(96vh, 740px);
+        /* subtle lift from surface */
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.25),
+          inset 0 -1px 0 rgba(0,0,0,0.15),
+          3px 4px 0 #8a867e,
+          6px 10px 30px rgba(0,0,0,0.5),
+          0 0 80px rgba(139,158,15,0.05);
+      }
+    }
+
+    /* very short viewports — compact mode */
+    @media (max-height: 580px) {
+      .gb-top { padding: 4px 12px 0; }
+      .gb-brand { padding: 2px 0 0; }
+      .gb-brand .brand-main { font-size: 11px; }
+      .gb-controls { padding: 2px 16px 0; }
+      .gb-ss { padding: 4px 0 0; }
+      .gb-speaker-area { padding: 4px 24px 8px 0; }
     }
   </style>
 </head>
 <body>
-  <div class="cabinet">
-    <!-- Marquee -->
-    <div class="marquee">
-      <div class="marquee-title">DOWNHILL<br>CYCLIST</div>
-      <div class="marquee-sub">ring or die</div>
+  <div class="gameboy">
+
+    <!-- top strip -->
+    <div class="gb-top">
+      <div class="power-area">
+        <div class="power-led"></div>
+        <span class="power-label">BATTERY</span>
+      </div>
+      <span class="dot-matrix-label">DOT MATRIX WITH STEREO SOUND</span>
     </div>
 
-    <!-- Bezel / monitor -->
-    <div class="bezel">
-      <div class="crt-wrap">
-        <canvas id="game"></canvas>
+    <!-- screen -->
+    <div class="gb-screen-section">
+      <div class="color-lines">
+        <span class="line-m"></span>
+        <span class="line-b"></span>
       </div>
-
-      <!-- Control panel -->
-      <div class="controls-panel">
-        <div class="sticker sticker--warn">CAUTION: ANC ZONE</div>
-        <div class="coin-slot">
-          <div class="coin-slot-hole"></div>
-          <div class="coin-slot-label">INSERT COIN</div>
+      <div class="gb-bezel">
+        <div class="gb-lcd">
+          <canvas id="game"></canvas>
         </div>
-        <div class="sticker sticker--info">FREE PLAY</div>
       </div>
-
-      <!-- Status -->
-      <div class="status-bar">
-        <div class="status-item status-item--credit">CREDIT <span>01</span></div>
-        <div class="status-item">SYS <span>OK</span></div>
-        <div class="status-item">VOL <span>■■■□□</span></div>
-      </div>
-
-      <!-- LEDs -->
-      <div class="leds">
-        <div class="led led--green"></div>
-        <div class="led led--dim"></div>
-        <div class="led led--on"></div>
-        <div class="led led--dim"></div>
-        <div class="led led--green"></div>
-      </div>
-
-      <!-- Side decals -->
-      <div class="side-decal side-decal--left">DOWNHILL</div>
-      <div class="side-decal side-decal--right">CYCLIST</div>
     </div>
+
+    <!-- branding -->
+    <div class="gb-brand">
+      <span class="brand-prefix">Downhill</span>
+      <span class="brand-main">CYCLIST</span>
+      <span class="brand-tm">TM</span>
+    </div>
+
+    <!-- D-pad and A/B -->
+    <div class="gb-controls">
+      <div class="dpad">
+        <div class="dpad-cross"></div>
+        <div class="dpad-center"></div>
+        <div class="dpad-btn dpad-up" data-key="ArrowUp"></div>
+        <div class="dpad-btn dpad-down" data-key="ArrowDown"></div>
+        <div class="dpad-btn dpad-left" data-key="ArrowLeft"></div>
+        <div class="dpad-btn dpad-right" data-key="ArrowRight"></div>
+      </div>
+      <div class="ab-area">
+        <div style="position:relative">
+          <button class="ab-btn" data-key="KeyW" type="button"></button>
+          <span class="ab-btn-label">B</span>
+        </div>
+        <div style="position:relative">
+          <button class="ab-btn" data-key="Space" type="button"></button>
+          <span class="ab-btn-label">A</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECT / START -->
+    <div class="gb-ss">
+      <div class="ss-group">
+        <span class="ss-label">SELECT</span>
+        <button class="ss-btn" type="button"></button>
+      </div>
+      <div class="ss-group">
+        <span class="ss-label">START</span>
+        <button class="ss-btn" data-key="Enter" type="button"></button>
+      </div>
+    </div>
+
+    <!-- speaker grille -->
+    <div class="gb-speaker-area">
+      <div class="gb-speaker">
+        <div class="speaker-slot"></div>
+        <div class="speaker-slot"></div>
+        <div class="speaker-slot"></div>
+        <div class="speaker-slot"></div>
+        <div class="speaker-slot"></div>
+        <div class="speaker-slot"></div>
+      </div>
+    </div>
+
+    <div class="gb-bottom"><span>PHONES</span></div>
   </div>
 
   <script type="module" src="src/main.js"></script>
