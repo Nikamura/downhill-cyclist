@@ -7,39 +7,18 @@ import { createPothole, updatePothole, checkPotholeCollision, drawPothole } from
 import { updateRoad, drawRoad, initScenery, updateScenery, drawScenery } from './road.js';
 import { drawBicycle, drawPedestrian, drawBellRing } from './sprites.js';
 import { drawHUD, drawTitleScreen, drawGameOver } from './ui.js';
-import { initTouch } from './touch.js';
+import { initTouch, setTouchGameState } from './touch.js';
 import { initAudio, startMusic, stopMusic, playBell, playHonk, playCrash } from './audio.js';
 
-// --- Setup canvas (fill screen, maintain aspect ratio) ---
+// --- Setup canvas (fill entire screen, no bars) ---
 const canvas = document.getElementById('game');
 canvas.width = GAME_W * SCALE;
 canvas.height = GAME_H * SCALE;
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
-function resizeCanvas() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const gameAspect = GAME_W / GAME_H;
-  const screenAspect = vw / vh;
-
-  let cssW, cssH;
-  if (screenAspect > gameAspect) {
-    // screen is wider than game — fit to height
-    cssH = vh;
-    cssW = vh * gameAspect;
-  } else {
-    // screen is taller than game — fit to width
-    cssW = vw;
-    cssH = vw / gameAspect;
-  }
-
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-}
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+canvas.style.width = '100vw';
+canvas.style.height = '100dvh';
 
 // --- Game state ---
 let state = 'title';
@@ -59,6 +38,7 @@ initScenery();
 function startGame() {
   initAudio();
   state = 'playing';
+  setTouchGameState('playing');
   player = createPlayer();
   pedestrians = [];
   cars = [];
@@ -100,6 +80,7 @@ function crash(reason) {
   player.alive = false;
   crashReason = reason;
   state = 'gameover';
+  setTouchGameState('gameover');
   playCrash();
   stopMusic();
 }

@@ -1,38 +1,46 @@
 import { setKey } from './input.js';
 
-// Fullscreen touch controls:
-// - Left side of screen: steer left
-// - Right side of screen: steer right
-// - Swipe/hold bottom-left: brake
-// - Swipe/hold bottom-right: pedal
-// - Tap center/top area: bell
-// - Double-tap or two-finger: start game (Enter)
+// Touch zones (during gameplay):
+// - Left half: steer left
+// - Right half: steer right
+// - Bottom-left 30%: brake
+// - Bottom-right 30%: pedal
+// - Top center: bell
+//
+// On title/gameover: any tap = Enter (start)
 
-const activeTouches = new Map(); // touchId -> action
+const activeTouches = new Map();
+let gameState = 'title'; // synced from main.js
+
+export function setTouchGameState(s) {
+  gameState = s;
+}
 
 export function initTouch() {
-  const canvas = document.getElementById('game');
-
-  canvas.addEventListener('touchstart', (e) => {
+  document.addEventListener('touchstart', (e) => {
     e.preventDefault();
+
+    // On title or gameover, any tap = Enter
+    if (gameState !== 'playing') {
+      setKey('Enter', true);
+      setTimeout(() => setKey('Enter', false), 100);
+      return;
+    }
+
     for (const touch of e.changedTouches) {
-      const action = getAction(touch, canvas);
+      const action = getAction(touch);
       activeTouches.set(touch.identifier, action);
       applyAction(action, true);
     }
-
-    // Two fingers = start/restart
-    if (e.touches.length >= 2) {
-      setKey('Enter', true);
-      setTimeout(() => setKey('Enter', false), 100);
-    }
   }, { passive: false });
 
-  canvas.addEventListener('touchmove', (e) => {
+  document.addEventListener('touchmove', (e) => {
     e.preventDefault();
+    if (gameState !== 'playing') return;
+
     for (const touch of e.changedTouches) {
       const oldAction = activeTouches.get(touch.identifier);
-      const newAction = getAction(touch, canvas);
+      const newAction = getAction(touch);
       if (oldAction !== newAction) {
         applyAction(oldAction, false);
         activeTouches.set(touch.identifier, newAction);
@@ -41,7 +49,7 @@ export function initTouch() {
     }
   }, { passive: false });
 
-  canvas.addEventListener('touchend', (e) => {
+  document.addEventListener('touchend', (e) => {
     e.preventDefault();
     for (const touch of e.changedTouches) {
       const action = activeTouches.get(touch.identifier);
@@ -52,7 +60,7 @@ export function initTouch() {
     }
   }, { passive: false });
 
-  canvas.addEventListener('touchcancel', (e) => {
+  document.addEventListener('touchcancel', (e) => {
     for (const touch of e.changedTouches) {
       const action = activeTouches.get(touch.identifier);
       if (action) {
@@ -62,14 +70,12 @@ export function initTouch() {
     }
   });
 
-  // Prevent context menu on long press
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
-function getAction(touch, canvas) {
-  const rect = canvas.getBoundingClientRect();
-  const x = (touch.clientX - rect.left) / rect.width;  // 0..1
-  const y = (touch.clientY - rect.top) / rect.height;   // 0..1
+function getAction(touch) {
+  const x = touch.clientX / window.innerWidth;   // 0..1
+  const y = touch.clientY / window.innerHeight;   // 0..1
 
   // Bottom 30% = brake (left) or pedal (right)
   if (y > 0.7) {
