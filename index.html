@@ -3,26 +3,415 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Downhill Cyclist</title>
+  <title>DOWNHILL CYCLIST — Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --cabinet-dark: #0a0a0f;
+      --cabinet-body: #1a1420;
+      --cabinet-accent: #2a1a35;
+      --bezel: #111118;
+      --bezel-edge: #2a2a3a;
+      --crt-glow: #4ae8c4;
+      --crt-glow-warm: #e8c44a;
+      --neon-pink: #ff2a6d;
+      --neon-blue: #05d9e8;
+      --neon-yellow: #f5e642;
+      --worn-sticker: #c4442a;
+      --coin-gold: #d4a017;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      background: #1a1a2e;
+      background: var(--cabinet-dark);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: 'VT323', monospace;
+    }
+
+    /* ── dim arcade floor ambient ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 80%, rgba(74, 232, 196, 0.03) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 50% 40%, rgba(232, 196, 74, 0.02) 0%, transparent 60%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.008) 2px,
+          rgba(255,255,255,0.008) 4px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── cabinet shell ── */
+    .cabinet {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ── marquee (top sign) ── */
+    .marquee {
+      position: relative;
+      width: 540px;
+      padding: 14px 20px 18px;
+      background:
+        linear-gradient(180deg, #1a0a22 0%, #0f0816 100%);
+      border: 2px solid var(--bezel-edge);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      text-align: center;
       overflow: hidden;
     }
+
+    /* marquee inner glow */
+    .marquee::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 100% at 50% 100%, rgba(255, 42, 109, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .marquee-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 22px;
+      letter-spacing: 3px;
+      background: linear-gradient(180deg, var(--neon-yellow) 0%, var(--neon-pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 12px rgba(255, 42, 109, 0.6))
+              drop-shadow(0 0 30px rgba(245, 230, 66, 0.3));
+      line-height: 1.3;
+    }
+
+    .marquee-sub {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: var(--neon-blue);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      text-shadow: 0 0 8px rgba(5, 217, 232, 0.5);
+    }
+
+    /* ── bezel (monitor frame) ── */
+    .bezel {
+      position: relative;
+      background: var(--bezel);
+      border: 2px solid var(--bezel-edge);
+      border-top: none;
+      padding: 20px 24px 16px;
+      border-radius: 0 0 6px 6px;
+      box-shadow:
+        inset 0 2px 20px rgba(0,0,0,0.8),
+        0 20px 60px rgba(0,0,0,0.6),
+        0 0 120px rgba(74, 232, 196, 0.04);
+    }
+
+    /* bezel screws */
+    .bezel::before,
+    .bezel::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #555, #222);
+      border: 1px solid #333;
+      top: 8px;
+    }
+    .bezel::before { left: 10px; }
+    .bezel::after { right: 10px; }
+
+    /* ── CRT screen wrapper ── */
+    .crt-wrap {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow:
+        0 0 2px 1px rgba(74, 232, 196, 0.15),
+        inset 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* scanlines */
+    .crt-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.12) 2px,
+        rgba(0, 0, 0, 0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* phosphor bloom / vignette */
+    .crt-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 85% 80% at 50% 50%,
+        transparent 60%,
+        rgba(0, 0, 0, 0.5) 100%
+      );
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* slight CRT curvature via subtle perspective */
+    .crt-wrap {
+      perspective: 800px;
+    }
+
     canvas {
+      display: block;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
-      border: 2px solid #333;
+      border: none;
+      /* very subtle CRT warmth */
+      filter: contrast(1.05) saturate(1.1) brightness(1.02);
+    }
+
+    /* ── control panel (below screen) ── */
+    .controls-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 12px;
+      padding: 0 4px;
+    }
+
+    /* sticker labels */
+    .sticker {
+      display: inline-block;
+      padding: 3px 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      letter-spacing: 0.5px;
+      border-radius: 2px;
+      transform: rotate(-1.5deg);
+      position: relative;
+    }
+
+    .sticker--warn {
+      background: var(--worn-sticker);
+      color: #ffeedd;
+      box-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+    }
+    .sticker--warn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+      border-radius: 2px;
+    }
+
+    .sticker--info {
+      background: #1a3a5a;
+      color: var(--neon-blue);
+      box-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+      transform: rotate(0.8deg);
+    }
+
+    /* coin slot */
+    .coin-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .coin-slot-hole {
+      width: 28px;
+      height: 5px;
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .coin-slot-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      color: #555;
+      letter-spacing: 1px;
+    }
+
+    /* ── status bar ── */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 10px;
+      padding: 6px 8px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .status-item {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: #4a4a5a;
+      letter-spacing: 1px;
+    }
+
+    .status-item span {
+      color: var(--crt-glow);
+      text-shadow: 0 0 6px rgba(74, 232, 196, 0.4);
+    }
+
+    .status-item--credit span {
+      color: var(--coin-gold);
+      text-shadow: 0 0 6px rgba(212, 160, 23, 0.4);
+    }
+
+    /* ── floating stickers on cabinet sides ── */
+    .side-decal {
+      position: absolute;
+      font-family: 'Press Start 2P', monospace;
+      color: rgba(255,255,255,0.04);
+      font-size: 10px;
+      writing-mode: vertical-rl;
+      letter-spacing: 4px;
+      pointer-events: none;
+      user-select: none;
+    }
+    .side-decal--left {
+      left: -44px;
+      top: 50%;
+      transform: translateY(-50%) rotate(180deg);
+    }
+    .side-decal--right {
+      right: -44px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    /* ── LED indicator dots ── */
+    .leds {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .led {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .led--on {
+      background: var(--neon-pink);
+      box-shadow: 0 0 6px var(--neon-pink), 0 0 12px rgba(255, 42, 109, 0.3);
+      animation: led-blink 2s ease-in-out infinite;
+    }
+    .led--dim {
+      background: #2a1520;
+    }
+    .led--green {
+      background: var(--crt-glow);
+      box-shadow: 0 0 6px var(--crt-glow), 0 0 12px rgba(74, 232, 196, 0.3);
+    }
+
+    @keyframes led-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── ambient screen flicker (very subtle) ── */
+    @keyframes crt-flicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.97; }
+      94% { opacity: 1; }
+    }
+    .crt-wrap {
+      animation: crt-flicker 8s linear infinite;
+    }
+
+    /* ── responsive ── */
+    @media (max-height: 760px) {
+      .marquee { padding: 10px 16px 12px; }
+      .marquee-title { font-size: 18px; }
+      .bezel { padding: 14px 18px 12px; }
+    }
+
+    @media (max-width: 600px) {
+      .marquee { width: 100vw; border-radius: 0; border-left: none; border-right: none; }
+      .bezel { border-left: none; border-right: none; border-radius: 0; }
+      .side-decal { display: none; }
     }
   </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
+  <div class="cabinet">
+    <!-- Marquee -->
+    <div class="marquee">
+      <div class="marquee-title">DOWNHILL<br>CYCLIST</div>
+      <div class="marquee-sub">ring or die</div>
+    </div>
+
+    <!-- Bezel / monitor -->
+    <div class="bezel">
+      <div class="crt-wrap">
+        <canvas id="game"></canvas>
+      </div>
+
+      <!-- Control panel -->
+      <div class="controls-panel">
+        <div class="sticker sticker--warn">CAUTION: ANC ZONE</div>
+        <div class="coin-slot">
+          <div class="coin-slot-hole"></div>
+          <div class="coin-slot-label">INSERT COIN</div>
+        </div>
+        <div class="sticker sticker--info">FREE PLAY</div>
+      </div>
+
+      <!-- Status -->
+      <div class="status-bar">
+        <div class="status-item status-item--credit">CREDIT <span>01</span></div>
+        <div class="status-item">SYS <span>OK</span></div>
+        <div class="status-item">VOL <span>■■■□□</span></div>
+      </div>
+
+      <!-- LEDs -->
+      <div class="leds">
+        <div class="led led--green"></div>
+        <div class="led led--dim"></div>
+        <div class="led led--on"></div>
+        <div class="led led--dim"></div>
+        <div class="led led--green"></div>
+      </div>
+
+      <!-- Side decals -->
+      <div class="side-decal side-decal--left">DOWNHILL</div>
+      <div class="side-decal side-decal--right">CYCLIST</div>
+    </div>
+  </div>
+
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
