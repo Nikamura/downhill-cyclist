@@ -29,6 +29,7 @@ export function createPlayer() {
     maxKmh: 0,
     screenShake: 0,
     zone: 'bike', // 'grass' | 'sidewalk' | 'bike' | 'car'
+    swirlTimer: 0,
     inAir: false,
     airTimer: 0,
     airDuration: 0,
@@ -48,6 +49,14 @@ export function updatePlayer(player) {
   }
   if (isDown('ArrowRight') || isDown('KeyD')) {
     player.x += steerSpeed;
+  }
+
+  // Pigeon swirl — loss of control
+  if (player.swirlTimer > 0) {
+    player.swirlTimer--;
+    const intensity = player.swirlTimer / 40; // fades out
+    player.x += (Math.random() - 0.5) * 4 * intensity;
+    player.x += Math.sin(player.frame * 0.5) * 2 * intensity;
   }
 
   // Can go across all zones

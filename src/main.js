@@ -163,8 +163,14 @@ function updatePlaying() {
   for (const bird of birds) {
     updateBird(bird, player.speed);
     if (bird.active && checkBirdCollision(bird, player)) {
-      crash(bird.pigeon ? 'Hit a pigeon!' : 'Hit by a bird!');
-      return;
+      if (bird.pigeon) {
+        // Pigeons don't crash you — just swirl your bike
+        player.swirlTimer = 40;
+        bird.active = false;
+      } else {
+        crash('Hit by a bird!');
+        return;
+      }
     }
   }
 
