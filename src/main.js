@@ -1,4 +1,4 @@
-import { GAME_W, GAME_H, SCALE, PED_SPAWN_INTERVAL_MIN, PED_SPAWN_INTERVAL_MAX, CAR_SPAWN_INTERVAL_MIN, CAR_SPAWN_INTERVAL_MAX, POTHOLE_SPAWN_CHANCE, RAMP_SPAWN_INTERVAL_MIN, RAMP_SPAWN_INTERVAL_MAX, BIRD_SPAWN_INTERVAL_MIN, BIRD_SPAWN_INTERVAL_MAX } from './constants.js';
+import { GAME_W, GAME_H, SCALE, PED_SPAWN_INTERVAL_MIN, PED_SPAWN_INTERVAL_MAX, CAR_SPAWN_INTERVAL_MIN, CAR_SPAWN_INTERVAL_MAX, POTHOLE_SPAWN_CHANCE, RAMP_SPAWN_INTERVAL_MIN, RAMP_SPAWN_INTERVAL_MAX, BIRD_SPAWN_INTERVAL_MIN, BIRD_SPAWN_INTERVAL_MAX, wrappedDx } from './constants.js';
 import { initInput, consumeKey } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createPedestrian, updatePedestrian, checkBellEffect, checkCollision } from './pedestrian.js';
@@ -227,7 +227,7 @@ function updatePlaying() {
   // Tree collisions (on grass) — skip when airborne
   if (!player.inAir) {
     for (const tree of trees) {
-      const dx = Math.abs(player.x - (tree.x + 1));
+      const dx = wrappedDx(player.x, tree.x + 1);
       const dy = Math.abs(player.y - tree.y);
       if (dx < 4 && dy < tree.size + 3) {
         crash('Hit a tree!');
@@ -276,19 +276,26 @@ function updatePlaying() {
     drawPedestrian(ctx, ped);
   }
 
-  // Draw player (with jump offset when airborne)
+  // Draw player (with jump offset when airborne) + wrap ghost at edges
+  const drawY = player.inAir ? player.y - player.jumpHeight : player.y;
+  const wrapGhostOffset = player.x < 12 ? GAME_W : player.x > GAME_W - 12 ? -GAME_W : 0;
+
   if (player.inAir) {
-    // Shadow on ground
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.fillRect(player.x - 3, player.y + 4, 7, 3);
-    // Draw bicycle elevated
-    drawBicycle(ctx, player.x, player.y - player.jumpHeight, player.frame, player.braking);
-  } else {
-    drawBicycle(ctx, player.x, player.y, player.frame, player.braking);
+    if (wrapGhostOffset) ctx.fillRect(player.x + wrapGhostOffset - 3, player.y + 4, 7, 3);
+  }
+
+  drawBicycle(ctx, player.x, drawY, player.frame, player.braking);
+  if (wrapGhostOffset) {
+    drawBicycle(ctx, player.x + wrapGhostOffset, drawY, player.frame, player.braking);
   }
 
   if (player.bellActive) {
     drawBellRing(ctx, player.x, player.y, player.bellProgress);
+    if (wrapGhostOffset) {
+      drawBellRing(ctx, player.x + wrapGhostOffset, player.y, player.bellProgress);
+    }
   }
 
   // Draw birds (above ground level)

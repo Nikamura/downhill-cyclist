@@ -5,6 +5,7 @@ import {
   SIDE_R_LEFT, SIDE_R_RIGHT,
   PED_ANC_CHANCE, PED_WALK_SPEED, PED_WANDER_CHANCE, PED_WANDER_SPEED,
   BELL_RANGE, GAME_H,
+  wrappedDx,
 } from './constants.js';
 
 export function createPedestrian() {
@@ -119,7 +120,7 @@ export function checkBellEffect(ped, player) {
   if (ped.hasANC) return;
   if (ped.scared) return;
 
-  const dx = ped.x - player.x;
+  const dx = wrappedDx(ped.x, player.x);
   const dy = ped.y - player.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
@@ -130,7 +131,7 @@ export function checkBellEffect(ped, player) {
 }
 
 export function checkCollision(ped, player) {
-  const dx = Math.abs(ped.x - player.x);
+  const dx = wrappedDx(ped.x, player.x);
   const dy = Math.abs(ped.y - player.y);
   return dx < (ped.collisionW || 5) && dy < 8;
 }

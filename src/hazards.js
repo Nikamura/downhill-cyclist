@@ -9,6 +9,7 @@ import {
   BIKE_L_CENTER, BIKE_R_CENTER, BIKE_W,
   RAMP_MIN_SPEED_KMH, JUMP_DURATION_BASE, JUMP_DURATION_SPEED_FACTOR,
   BIRD_SPEED_MIN, BIRD_SPEED_MAX,
+  wrappedDx,
 } from './constants.js';
 
 // ---- CARS ----
@@ -88,7 +89,7 @@ export function updateCar(car, player) {
 export function checkCarCollision(car, player) {
   const hw = car.width / 2;
   const hl = car.length / 2;
-  const dx = Math.abs(car.x - player.x);
+  const dx = wrappedDx(car.x, player.x);
   const dy = Math.abs(car.y - player.y);
   return dx < hw + 3 && dy < hl + 4;
 }
@@ -173,7 +174,7 @@ export function updatePothole(pothole, playerSpeed) {
 }
 
 export function checkPotholeCollision(pothole, player) {
-  const dx = Math.abs(pothole.x - player.x);
+  const dx = wrappedDx(pothole.x, player.x);
   const dy = Math.abs(pothole.y - player.y);
   return dx < pothole.size + 2 && dy < pothole.size + 3;
 }
@@ -231,7 +232,7 @@ export function updateRamp(ramp, playerSpeed) {
 
 export function checkRampCollision(ramp, player) {
   if (ramp.used || player.inAir) return false;
-  const dx = Math.abs(ramp.x - player.x);
+  const dx = wrappedDx(ramp.x, player.x);
   const dy = Math.abs(ramp.y - player.y);
   return dx < ramp.width / 2 + 2 && dy < ramp.length / 2 + 2;
 }
@@ -317,7 +318,7 @@ export function updateBird(bird, playerSpeed) {
 }
 
 export function checkBirdCollision(bird, player) {
-  const dx = Math.abs(bird.x - player.x);
+  const dx = wrappedDx(bird.x, player.x);
   const dy = Math.abs(bird.y - player.y);
   if (dx >= 5 || dy >= 5) return false;
 

@@ -138,18 +138,28 @@ export function updateScenery(scrollSpeed) {
   }
 }
 
+function drawTree(ctx, x, y, size) {
+  ctx.fillStyle = '#5a3a1a';
+  ctx.fillRect(x, y, 2, size);
+  ctx.fillStyle = '#3a6a2a';
+  const r = size - 1;
+  for (let dy = -r; dy <= 0; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy <= r * r) {
+        ctx.fillRect(x + 1 + dx, y + dy, 1, 1);
+      }
+    }
+  }
+}
+
 export function drawScenery(ctx) {
   for (const tree of trees) {
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(tree.x, tree.y, 2, tree.size);
-    ctx.fillStyle = '#3a6a2a';
-    const r = tree.size - 1;
-    for (let dy = -r; dy <= 0; dy++) {
-      for (let dx = -r; dx <= r; dx++) {
-        if (dx * dx + dy * dy <= r * r) {
-          ctx.fillRect(tree.x + 1 + dx, tree.y + dy, 1, 1);
-        }
-      }
+    drawTree(ctx, tree.x, tree.y, tree.size);
+    // Wrap ghost for trees near screen edges
+    if (tree.x < 10) {
+      drawTree(ctx, tree.x + GAME_W, tree.y, tree.size);
+    } else if (tree.x > GAME_W - 10) {
+      drawTree(ctx, tree.x - GAME_W, tree.y, tree.size);
     }
   }
 }

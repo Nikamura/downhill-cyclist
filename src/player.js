@@ -1,14 +1,15 @@
 import {
+  GAME_W,
   BIKE_L_CENTER, BIKE_L_LEFT, BIKE_L_RIGHT,
   BIKE_R_LEFT, BIKE_R_RIGHT,
   CAR_LEFT, CAR_RIGHT,
   SIDE_L_LEFT, SIDE_R_RIGHT,
-  PLAY_LEFT, PLAY_RIGHT,
   PLAYER_SPEED, BASE_SCROLL_SPEED, SPEED_TO_KMH,
   GRAVITY_ACCEL, AIR_DRAG, PEDAL_ACCEL, BRAKE_DECEL, MIN_SPEED,
   BELL_COOLDOWN,
   GRASS_SLOPE_FORCE, GRASS_WOBBLE_AMP, GRASS_FRICTION, GRASS_SHAKE_BASE,
   JUMP_MAX_HEIGHT,
+  wrapX,
 } from './constants.js';
 import { isDown, consumeKey } from './input.js';
 
@@ -59,8 +60,8 @@ export function updatePlayer(player) {
     player.x += Math.sin(player.frame * 0.5) * 2 * intensity;
   }
 
-  // Can go across all zones
-  player.x = Math.max(PLAY_LEFT + 3, Math.min(PLAY_RIGHT - 3, player.x));
+  // Wrap horizontally (globe)
+  player.x = wrapX(player.x);
 
   // Track which zone the player is in
   if (player.x < SIDE_L_LEFT || player.x > SIDE_R_RIGHT) {
@@ -88,14 +89,16 @@ export function updatePlayer(player) {
   }
 
   // --- Grass slope physics: grass is sloped towards the road ---
+  // With wrapping, the two grass zones merge around the "back" of the globe
   if (!player.inAir && player.zone === 'grass') {
     const onLeft = player.x < SIDE_L_LEFT;
     const grassEdge = onLeft ? SIDE_L_LEFT : SIDE_R_RIGHT;
-    const maxGrassDist = onLeft ? SIDE_L_LEFT - PLAY_LEFT : PLAY_RIGHT - SIDE_R_RIGHT;
+    const totalGrass = SIDE_L_LEFT + (GAME_W - SIDE_R_RIGHT);
+    const halfGrass = totalGrass / 2;
     const distFromRoad = Math.abs(player.x - grassEdge);
-    const normalizedDist = distFromRoad / maxGrassDist;
+    const normalizedDist = Math.min(1, distFromRoad / halfGrass);
 
-    // Slope always pushes towards the road
+    // Slope always pushes towards the nearest road edge
     const slopeDir = onLeft ? 1 : -1;
     const slopeForce = GRASS_SLOPE_FORCE * (0.3 + normalizedDist * 0.7);
     player.x += slopeForce * slopeDir;
@@ -105,8 +108,8 @@ export function updatePlayer(player) {
     player.x += wobble;
   }
 
-  // Re-clamp after grass forces
-  player.x = Math.max(PLAY_LEFT + 3, Math.min(PLAY_RIGHT - 3, player.x));
+  // Re-wrap after grass forces
+  player.x = wrapX(player.x);
 
   // --- Downhill physics ---
   let accel = GRAVITY_ACCEL;
