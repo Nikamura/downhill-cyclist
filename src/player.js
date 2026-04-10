@@ -44,7 +44,7 @@ export function updatePlayer(player) {
   player.frame++;
 
   // --- Horizontal movement ---
-  const steerSpeed = PLAYER_SPEED + player.speed * 0.15;
+  const steerSpeed = PLAYER_SPEED + player.speed * 0.1;
   if (isDown('ArrowLeft') || isDown('KeyA')) {
     player.x -= steerSpeed;
   }
