@@ -96,6 +96,17 @@ export const BIRD_SPAWN_INTERVAL_MAX = 280;
 export const BIRD_SPEED_MIN = 1.0;
 export const BIRD_SPEED_MAX = 2.5;
 
+// World wrapping (horizontal globe)
+export function wrapX(x) {
+  return ((x % GAME_W) + GAME_W) % GAME_W;
+}
+
+export function wrappedDx(x1, x2) {
+  let dx = Math.abs(x1 - x2);
+  if (dx > GAME_W / 2) dx = GAME_W - dx;
+  return dx;
+}
+
 // Bell
 export const BELL_RANGE = 60;
 export const BELL_COOLDOWN = 30;
