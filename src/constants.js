@@ -82,6 +82,20 @@ export const ONCOMING_SPEED_MAX_KMH = 110;
 export const POTHOLE_SPAWN_CHANCE = 0.008;
 export const POTHOLE_SIZE = 3;
 
+// Ramps (bike lane jumps)
+export const RAMP_SPAWN_INTERVAL_MIN = 200;
+export const RAMP_SPAWN_INTERVAL_MAX = 450;
+export const RAMP_MIN_SPEED_KMH = 15;
+export const JUMP_DURATION_BASE = 35;
+export const JUMP_DURATION_SPEED_FACTOR = 0.5;
+export const JUMP_MAX_HEIGHT = 8;
+
+// Birds
+export const BIRD_SPAWN_INTERVAL_MIN = 120;
+export const BIRD_SPAWN_INTERVAL_MAX = 280;
+export const BIRD_SPEED_MIN = 1.0;
+export const BIRD_SPEED_MAX = 2.5;
+
 // Bell
 export const BELL_RANGE = 60;
 export const BELL_COOLDOWN = 30;

@@ -8,6 +8,7 @@ import {
   GRAVITY_ACCEL, AIR_DRAG, PEDAL_ACCEL, BRAKE_DECEL, MIN_SPEED,
   BELL_COOLDOWN,
   GRASS_SLOPE_FORCE, GRASS_WOBBLE_AMP, GRASS_FRICTION, GRASS_SHAKE_BASE,
+  JUMP_MAX_HEIGHT,
 } from './constants.js';
 import { isDown, consumeKey } from './input.js';
 
@@ -28,6 +29,12 @@ export function createPlayer() {
     maxKmh: 0,
     screenShake: 0,
     zone: 'bike', // 'grass' | 'sidewalk' | 'bike' | 'car'
+    inAir: false,
+    airTimer: 0,
+    airDuration: 0,
+    airTimeCurrent: 0,
+    bestAirTime: 0,
+    jumpHeight: 0,
   };
 }
 
@@ -58,8 +65,21 @@ export function updatePlayer(player) {
     player.zone = 'sidewalk';
   }
 
+  // --- Air state (from ramps) ---
+  if (player.inAir) {
+    player.airTimer--;
+    player.airTimeCurrent += 1 / 60; // seconds
+    const progress = 1 - player.airTimer / player.airDuration;
+    player.jumpHeight = Math.sin(progress * Math.PI) * JUMP_MAX_HEIGHT;
+    if (player.airTimer <= 0) {
+      player.inAir = false;
+      player.jumpHeight = 0;
+      player.bestAirTime = Math.max(player.bestAirTime, player.airTimeCurrent);
+    }
+  }
+
   // --- Grass slope physics: grass is sloped towards the road ---
-  if (player.zone === 'grass') {
+  if (!player.inAir && player.zone === 'grass') {
     const onLeft = player.x < SIDE_L_LEFT;
     const grassEdge = onLeft ? SIDE_L_LEFT : SIDE_R_RIGHT;
     const maxGrassDist = onLeft ? SIDE_L_LEFT - PLAY_LEFT : PLAY_RIGHT - SIDE_R_RIGHT;
