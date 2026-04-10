@@ -50,7 +50,7 @@ export const GRASS_FRICTION = 0.003;      // extra rolling resistance on grass
 export const GRASS_SHAKE_BASE = 0.8;      // base screen shake on grass
 
 // Player — downhill physics
-export const PLAYER_SPEED = 1.5;
+export const PLAYER_SPEED = 1.0;
 export const BASE_SCROLL_SPEED = 1.2;
 
 export const GRAVITY_ACCEL = 0.006;
