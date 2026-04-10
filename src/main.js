@@ -163,7 +163,7 @@ function updatePlaying() {
   for (const bird of birds) {
     updateBird(bird, player.speed);
     if (bird.active && checkBirdCollision(bird, player)) {
-      crash('Hit by a bird!');
+      crash(bird.pigeon ? 'Hit a pigeon!' : 'Hit by a bird!');
       return;
     }
   }

@@ -279,6 +279,21 @@ export function drawRamp(ctx, ramp) {
 
 export function createBird() {
   const fromLeft = Math.random() > 0.5;
+  const isPigeon = Math.random() < 0.3; // 30% chance pigeon
+
+  if (isPigeon) {
+    // Pigeons walk on the ground across bike lanes / sidewalks
+    const spawnLeft = Math.random() > 0.5;
+    return {
+      x: spawnLeft ? -8 : GAME_W + 8,
+      y: -10 - Math.random() * 30,
+      speed: 0.4 + Math.random() * 0.4, // slower than flying birds
+      dir: spawnLeft ? 1 : -1,
+      frame: Math.floor(Math.random() * 20),
+      active: true,
+      pigeon: true,
+    };
+  }
 
   return {
     x: fromLeft ? -10 : GAME_W + 10,
@@ -287,6 +302,7 @@ export function createBird() {
     dir: fromLeft ? 1 : -1,
     frame: Math.floor(Math.random() * 20),
     active: true,
+    pigeon: false,
   };
 }
 
@@ -303,12 +319,24 @@ export function updateBird(bird, playerSpeed) {
 export function checkBirdCollision(bird, player) {
   const dx = Math.abs(bird.x - player.x);
   const dy = Math.abs(bird.y - player.y);
-  return dx < 5 && dy < 5;
+  if (dx >= 5 || dy >= 5) return false;
+
+  // Pigeons are ground hazards — only hit when NOT in the air
+  if (bird.pigeon) return !player.inAir;
+
+  // Flying birds — only hit when in the air
+  return player.inAir;
 }
 
 export function drawBird(ctx, bird) {
   const x = Math.round(bird.x);
   const y = Math.round(bird.y);
+
+  if (bird.pigeon) {
+    drawPigeon(ctx, x, y, bird.frame, bird.dir);
+    return;
+  }
+
   const wingPhase = Math.floor(bird.frame / 5) % 4;
 
   // Body
@@ -345,4 +373,40 @@ export function drawBird(ctx, bird) {
   // Tail
   ctx.fillStyle = '#222';
   ctx.fillRect(x - bird.dir * 2, y + 1, 1, 1);
+}
+
+function drawPigeon(ctx, x, y, frame, dir) {
+  const bob = Math.floor(frame / 8) % 2;
+  const legAnim = Math.floor(frame / 6) % 2;
+
+  // Body (plump, grey-blue)
+  ctx.fillStyle = '#7788aa';
+  ctx.fillRect(x - 2, y + bob, 4, 3);
+
+  // Head (with head-bob)
+  const headX = x + dir * 2;
+  const headBob = Math.floor(frame / 5) % 2;
+  ctx.fillStyle = '#8899bb';
+  ctx.fillRect(headX, y - 1 + bob + headBob, 2, 2);
+
+  // Eye
+  ctx.fillStyle = '#ff6600';
+  ctx.fillRect(headX + (dir > 0 ? 1 : 0), y - 1 + bob + headBob, 1, 1);
+
+  // Beak
+  ctx.fillStyle = '#ccaa44';
+  ctx.fillRect(headX + dir * 2, y + bob + headBob, 1, 1);
+
+  // Iridescent neck patch (green/purple shimmer)
+  ctx.fillStyle = frame % 20 < 10 ? '#55aa77' : '#8866aa';
+  ctx.fillRect(x + dir, y + 1 + bob, 1, 1);
+
+  // Legs
+  ctx.fillStyle = '#cc6666';
+  ctx.fillRect(x - 1, y + 3 + bob, 1, 1 + legAnim);
+  ctx.fillRect(x + 1, y + 3 + bob, 1, 1 + (1 - legAnim));
+
+  // Tail feathers
+  ctx.fillStyle = '#556677';
+  ctx.fillRect(x - dir * 2, y + 1 + bob, 1, 2);
 }
