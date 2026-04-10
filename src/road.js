@@ -115,7 +115,7 @@ export function drawRoad(ctx) {
 export const trees = [];
 
 export function initScenery() {
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 3; i++) {
     trees.push({
       x: Math.random() > 0.5
         ? Math.random() * (SIDE_L_LEFT - 6)

@@ -141,6 +141,21 @@ export function drawHUD(ctx, player) {
     ctx.fillText('PEDAL!', 2, 32);
   }
 
+  // Air time display
+  if (player.inAir) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(GAME_W / 2 - 25, 50, 50, 12);
+    ctx.fillStyle = '#00ffff';
+    ctx.font = '7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`AIR ${player.airTimeCurrent.toFixed(1)}s`, GAME_W / 2, 59);
+    ctx.textAlign = 'left';
+  } else if (player.bestAirTime > 0) {
+    ctx.fillStyle = '#448';
+    ctx.font = '5px monospace';
+    ctx.fillText(`best air: ${player.bestAirTime.toFixed(1)}s`, 2, 48);
+  }
+
   // Zone warning
   if (player.zone === 'grass') {
     ctx.fillStyle = '#44cc44';
@@ -179,9 +194,9 @@ export function drawTitleScreen(ctx, frame) {
   ctx.font = '5px monospace';
   ctx.fillText('GRASS: sloped! (trees!)', GAME_W / 2, 153);
   ctx.fillText('SIDEWALK: potholes!', GAME_W / 2, 163);
-  ctx.fillText('BIKE PATH: people', GAME_W / 2, 173);
-  ctx.fillText('CAR ROAD: cars!', GAME_W / 2, 183);
-  ctx.fillText('some have AirPods, dogs, gfs', GAME_W / 2, 193);
+  ctx.fillText('BIKE PATH: ramps + people', GAME_W / 2, 173);
+  ctx.fillText('CAR ROAD: cars! BIRDS!', GAME_W / 2, 183);
+  ctx.fillText('ramps = jump! dodge birds!', GAME_W / 2, 193);
 
   if (Math.floor(frame / 30) % 2 === 0) {
     ctx.fillStyle = COLORS.bell;
@@ -215,6 +230,11 @@ export function drawGameOver(ctx, player, frame, crashReason) {
 
   ctx.fillStyle = COLORS.speedInsane;
   ctx.fillText(`Top: ${Math.floor(player.maxKmh)} km/h`, GAME_W / 2, 125);
+
+  if (player.bestAirTime > 0) {
+    ctx.fillStyle = '#00ffff';
+    ctx.fillText(`Best air: ${player.bestAirTime.toFixed(1)}s`, GAME_W / 2, 140);
+  }
 
   if (Math.floor(frame / 30) % 2 === 0) {
     ctx.fillStyle = COLORS.bell;

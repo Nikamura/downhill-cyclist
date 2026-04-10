@@ -5,7 +5,10 @@ import {
   ONCOMING_SPEED_MIN_KMH, ONCOMING_SPEED_MAX_KMH,
   SIDE_L_LEFT, SIDE_R_LEFT, SIDEWALK_W,
   POTHOLE_SIZE, SPEED_TO_KMH,
-  GAME_H, COLORS,
+  GAME_H, GAME_W, COLORS,
+  BIKE_L_CENTER, BIKE_R_CENTER, BIKE_W,
+  RAMP_MIN_SPEED_KMH, JUMP_DURATION_BASE, JUMP_DURATION_SPEED_FACTOR,
+  BIRD_SPEED_MIN, BIRD_SPEED_MAX,
 } from './constants.js';
 
 // ---- CARS ----
@@ -201,4 +204,209 @@ export function drawPothole(ctx, pothole) {
   ctx.fillStyle = '#2a2015';
   ctx.fillRect(x - s, y, s * 2 + 1, 1);
   ctx.fillRect(x, y - s, 1, s * 2 + 1);
+}
+
+// ---- RAMPS ----
+
+export function createRamp() {
+  const onLeft = Math.random() > 0.5;
+  const x = onLeft ? BIKE_L_CENTER : BIKE_R_CENTER;
+
+  return {
+    x,
+    y: -15,
+    width: BIKE_W - 4,
+    length: 8,
+    active: true,
+    used: false,
+  };
+}
+
+export function updateRamp(ramp, playerSpeed) {
+  ramp.y += playerSpeed;
+  if (ramp.y > GAME_H + 15) {
+    ramp.active = false;
+  }
+}
+
+export function checkRampCollision(ramp, player) {
+  if (ramp.used || player.inAir) return false;
+  const dx = Math.abs(ramp.x - player.x);
+  const dy = Math.abs(ramp.y - player.y);
+  return dx < ramp.width / 2 + 2 && dy < ramp.length / 2 + 2;
+}
+
+export function launchPlayer(player) {
+  player.inAir = true;
+  const duration = Math.floor(JUMP_DURATION_BASE + player.kmh * JUMP_DURATION_SPEED_FACTOR);
+  player.airDuration = duration;
+  player.airTimer = duration;
+  player.airTimeCurrent = 0;
+  player.jumpHeight = 0;
+}
+
+export function drawRamp(ctx, ramp) {
+  const x = Math.round(ramp.x);
+  const y = Math.round(ramp.y);
+  const hw = Math.floor(ramp.width / 2);
+  const hl = Math.floor(ramp.length / 2);
+
+  // Ramp base (darker)
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(x - hw, y - hl, ramp.width, ramp.length);
+
+  // Ramp surface (lighter, showing incline)
+  ctx.fillStyle = '#C49A1A';
+  ctx.fillRect(x - hw + 1, y - hl, ramp.width - 2, ramp.length - 2);
+
+  // Incline stripes (showing slope direction)
+  ctx.fillStyle = '#A07D15';
+  for (let i = 0; i < ramp.length - 2; i += 2) {
+    ctx.fillRect(x - hw + 1, y - hl + i, ramp.width - 2, 1);
+  }
+
+  // Front edge highlight (lip of the ramp)
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(x - hw, y - hl, ramp.width, 1);
+
+  // Side edges
+  ctx.fillStyle = '#6B5010';
+  ctx.fillRect(x - hw, y - hl, 1, ramp.length);
+  ctx.fillRect(x + hw - 1, y - hl, 1, ramp.length);
+}
+
+// ---- BIRDS ----
+
+export function createBird() {
+  const fromLeft = Math.random() > 0.5;
+  const isPigeon = Math.random() < 0.3; // 30% chance pigeon
+
+  if (isPigeon) {
+    // Pigeons walk on the ground across bike lanes / sidewalks
+    const spawnLeft = Math.random() > 0.5;
+    return {
+      x: spawnLeft ? -8 : GAME_W + 8,
+      y: -10 - Math.random() * 30,
+      speed: 0.4 + Math.random() * 0.4, // slower than flying birds
+      dir: spawnLeft ? 1 : -1,
+      frame: Math.floor(Math.random() * 20),
+      active: true,
+      pigeon: true,
+    };
+  }
+
+  return {
+    x: fromLeft ? -10 : GAME_W + 10,
+    y: -10 - Math.random() * 30,
+    speed: BIRD_SPEED_MIN + Math.random() * (BIRD_SPEED_MAX - BIRD_SPEED_MIN),
+    dir: fromLeft ? 1 : -1,
+    frame: Math.floor(Math.random() * 20),
+    active: true,
+    pigeon: false,
+  };
+}
+
+export function updateBird(bird, playerSpeed) {
+  bird.frame++;
+  bird.x += bird.speed * bird.dir;
+  bird.y += playerSpeed;
+
+  if (bird.x < -20 || bird.x > GAME_W + 20 || bird.y > GAME_H + 20) {
+    bird.active = false;
+  }
+}
+
+export function checkBirdCollision(bird, player) {
+  const dx = Math.abs(bird.x - player.x);
+  const dy = Math.abs(bird.y - player.y);
+  if (dx >= 5 || dy >= 5) return false;
+
+  // Pigeons are ground hazards — only hit when NOT in the air
+  if (bird.pigeon) return !player.inAir;
+
+  // Flying birds — only hit when in the air
+  return player.inAir;
+}
+
+export function drawBird(ctx, bird) {
+  const x = Math.round(bird.x);
+  const y = Math.round(bird.y);
+
+  if (bird.pigeon) {
+    drawPigeon(ctx, x, y, bird.frame, bird.dir);
+    return;
+  }
+
+  const wingPhase = Math.floor(bird.frame / 5) % 4;
+
+  // Body
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(x - 1, y, 3, 2);
+
+  // Head
+  ctx.fillRect(x + bird.dir * 2, y, 2, 1);
+
+  // Beak
+  ctx.fillStyle = '#cc8800';
+  ctx.fillRect(x + bird.dir * 4, y, 1, 1);
+
+  // Eye
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + bird.dir * 2 + (bird.dir > 0 ? 1 : 0), y, 1, 1);
+
+  // Wings (animated)
+  ctx.fillStyle = '#333';
+  let wingY;
+  if (wingPhase === 0) wingY = -2;
+  else if (wingPhase === 1) wingY = -1;
+  else if (wingPhase === 2) wingY = 0;
+  else wingY = -1;
+
+  // Left wing
+  ctx.fillRect(x - 3, y + wingY, 2, 1);
+  ctx.fillRect(x - 4, y + wingY - (wingPhase < 2 ? 1 : 0), 1, 1);
+
+  // Right wing
+  ctx.fillRect(x + 2, y + wingY, 2, 1);
+  ctx.fillRect(x + 4, y + wingY - (wingPhase < 2 ? 1 : 0), 1, 1);
+
+  // Tail
+  ctx.fillStyle = '#222';
+  ctx.fillRect(x - bird.dir * 2, y + 1, 1, 1);
+}
+
+function drawPigeon(ctx, x, y, frame, dir) {
+  const bob = Math.floor(frame / 8) % 2;
+  const legAnim = Math.floor(frame / 6) % 2;
+
+  // Body (plump, grey-blue)
+  ctx.fillStyle = '#7788aa';
+  ctx.fillRect(x - 2, y + bob, 4, 3);
+
+  // Head (with head-bob)
+  const headX = x + dir * 2;
+  const headBob = Math.floor(frame / 5) % 2;
+  ctx.fillStyle = '#8899bb';
+  ctx.fillRect(headX, y - 1 + bob + headBob, 2, 2);
+
+  // Eye
+  ctx.fillStyle = '#ff6600';
+  ctx.fillRect(headX + (dir > 0 ? 1 : 0), y - 1 + bob + headBob, 1, 1);
+
+  // Beak
+  ctx.fillStyle = '#ccaa44';
+  ctx.fillRect(headX + dir * 2, y + bob + headBob, 1, 1);
+
+  // Iridescent neck patch (green/purple shimmer)
+  ctx.fillStyle = frame % 20 < 10 ? '#55aa77' : '#8866aa';
+  ctx.fillRect(x + dir, y + 1 + bob, 1, 1);
+
+  // Legs
+  ctx.fillStyle = '#cc6666';
+  ctx.fillRect(x - 1, y + 3 + bob, 1, 1 + legAnim);
+  ctx.fillRect(x + 1, y + 3 + bob, 1, 1 + (1 - legAnim));
+
+  // Tail feathers
+  ctx.fillStyle = '#556677';
+  ctx.fillRect(x - dir * 2, y + 1 + bob, 1, 2);
 }
